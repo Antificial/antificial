@@ -1,0 +1,28 @@
+{
+    "build_systems": [{
+        "name": "Python",
+        "shell_cmd": "python $project_path/antificial/main.py"
+    }],
+    "folders": [{
+        "file_exclude_patterns": [
+            "*.pyc"
+        ],
+        "folder_exclude_patterns": [
+            "__pycache__"
+        ],
+        "name": "Source",
+        "path": "antificial"
+    }, {
+        "file_exclude_patterns": [
+            "antificial.sublime-project"
+        ],
+        "folder_exclude_patterns": [
+            "antificial"
+        ],
+        "name": "Root",
+        "path": "."
+    }],
+    "settings": {
+        "tab_size": 4
+    }
+}
