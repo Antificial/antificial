@@ -14,7 +14,7 @@ def handle_commands(cc_queue):
     try:
         cc = cc_queue.get(False)
         if cc == "done":
-            util.iprint("[IR] Quit")
+            util.iprint("[FW] Quit")
             global RUNNING
             RUNNING = False
     except:

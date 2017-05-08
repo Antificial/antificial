@@ -3,10 +3,9 @@ import framework as fw
 import renderer as rr
 from util import *
 from multiprocessing import Process, Pipe, Queue
-import time
 
 def init():
-    global ir_cc_queue, fw_cc_queue, fw_output
+    global ir_cc_queue, fw_cc_queue, fw_output, irp, fwp
     ir_cc_queue = Queue() # For sending commands to sub-processes
     fw_cc_queue = Queue() # For sending commands to sub-processes
     ir_input, ir_output = Pipe() # For IPC
@@ -18,4 +17,6 @@ def init():
 
 if __name__ == '__main__':
     init()
-    rr.AntificialApp(fw_output).run()
+    rr.AntificialApp(fw_output, ir_cc_queue, fw_cc_queue).run()
+    irp.join()
+    fwp.join()

@@ -10,6 +10,7 @@ from kivy.lang import Builder
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.core.window import Window
 from kivy.uix.widget import Widget
+from kivy.uix.button import Button
 from kivy.properties import ObjectProperty
 from kivy.graphics.vertex_instructions import Ellipse, Line
 from kivy.clock import Clock
@@ -62,7 +63,16 @@ class Ant():
 
 class MenuWidget(Widget):
     dbg = ObjectProperty(None)
+    btn_quit = ObjectProperty(None)
     number = 0
+
+    def __init__(self, **kwargs):
+        super(MenuWidget, self).__init__(**kwargs)
+
+    def btn_quit(self, dt):
+        ir_cc.put("done")
+        fw_cc.put("done")
+        App.get_running_app().stop()
 
     def get_data(self, dt):
         if pipe.poll():
@@ -119,11 +129,11 @@ class SimulationWidget(Widget):
                     self.grid_x.append(Line(points=[i*self.grid_size, 0, i*self.grid_size, y], width=2))
                 for j in range(0, lines_y):
                     self.grid_y.append(Line(points=[0, j*self.grid_size, x, j*self.grid_size], width=2))
-        for ant in self.ants:
-            ant.move(top=self.top, width=self.width)
+        # for ant in self.ants:
+        #     ant.move(top=self.top, width=self.width)
 
     def _keyboard_closed(self):
-        print('My keyboard have been closed!')
+        print('My keyboard has been closed!')
 
     def _on_keyboard_down(self, keyboard, keycode, text, modifiers):
         print('The key', keycode, 'have been pressed')
@@ -151,16 +161,23 @@ sm.add_widget(simulation_screen)
 sm.add_widget(menu_screen)
 
 class AntificialApp(App):
-    def __init__(self, p):
+    def __init__(self, fw_output, ir_cc_queue, fw_cc_queue):
         super(AntificialApp, self).__init__()
-        global pipe
-        pipe = p
+        global pipe, ir_cc, fw_cc
+        pipe = fw_output
+        ir_cc = ir_cc_queue
+        fw_cc = fw_cc_queue
 
     def build(self):
         simulation_widget = SimulationWidget()
         menu_widget = MenuWidget()
         simulation_screen.add_widget(simulation_widget)
         menu_screen.add_widget(menu_widget)
+
+        btn_quit = Button(text='Quit')
+        btn_quit.bind(on_press=menu_widget.btn_quit)
+        menu_widget.add_widget(btn_quit)
+
         Clock.schedule_interval(simulation_widget.update, 1.0 / 30.0)
         Clock.schedule_interval(simulation_widget.update_fps, 1.0 / 20.0)
         Clock.schedule_interval(menu_widget.update_dbg, 1.0 / 20.0)
