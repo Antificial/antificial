@@ -30,7 +30,9 @@ def work(cc_queue, ir_output, fw_input):
             fw_input.send(input)
 
 # Run this from other code
-def run(cc_queue, ir_output, fw_input):
+def run(cc_queue, ir_output, fw_input, world):
+    global WORLD
+    WORLD = world
     try:
         print("Running FW module...")
         work(cc_queue, ir_output, fw_input)

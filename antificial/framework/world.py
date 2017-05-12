@@ -1,7 +1,8 @@
 #! /usr/bin/env python
 
-from array import array
+from multiprocessing import Array
 import util
+from random import randint
 
 class Field:
     def __init__(self, x, y, is_nest, ant_count, home_pheromone_level, food_pheromone_level, player_food_levels):
@@ -61,10 +62,7 @@ class World:
         self.player_food_indexes = range(4, 4 + self.player_count)
 
         self.array_size = self.width * self.height * self.ints_per_coordinate
-        self.data = array('i', range(self.array_size))
-
-        for index in range(self.array_size):
-            self.data[index] = 0
+        self.data = Array('i', [randint(1,256) for i in range(self.array_size)])
 
     def get(self, x, y):
         if (x >= self.width or x < 0):
