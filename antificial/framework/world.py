@@ -3,8 +3,6 @@
 from array import array
 import util
 
-#from util import *
-
 class Field:
     def __init__(self, x, y, is_nest, ant_count, home_pheromone_level, food_pheromone_level, player_food_levels):
         self.x = x
@@ -14,6 +12,27 @@ class Field:
         self.home_pheromone_level = home_pheromone_level
         self.food_pheromone_level = food_pheromone_level
         self.player_food_levels = player_food_levels
+
+    def print_small(self):
+        output = "[x:" + str(self.x) + " y:" + str(self.y)
+        if (self.is_nest > 0):
+            output += " N"
+
+        if (self.ant_count > 0):
+            output += " A:" + str(self.ant_count)
+
+        if (self.home_pheromone_level > 0):
+            output += " H:" + str(self.home_pheromone_level)
+
+        if (self.food_pheromone_level > 0):
+            output += " F:" + str(self.food_pheromone_level)
+
+        for index in range(len(self.player_food_levels)):
+            if (self.player_food_levels[index] > 0):
+                output += " P" + str(index) + ":" + str(self.player_food_levels[index])
+
+        output += "]"
+        util.iprint(output)
 
     def iprint(self):
         util.iprint("[Field] x:{self.x} y:{self.y} is_nest:{self.is_nest} ant_count:{self.ant_count} home_pheromone_level:{self.home_pheromone_level} food_pheromone_level:{self.food_pheromone_level} player_food_levels:{self.player_food_levels}")
@@ -41,20 +60,20 @@ class World:
         self.food_pheromone_index = 3
         self.player_food_indexes = range(4, 4 + self.player_count)
 
-        array_size = self.width * self.height * self.ints_per_coordinate
-        self.data = array('i', range(array_size))
+        self.array_size = self.width * self.height * self.ints_per_coordinate
+        self.data = array('i', range(self.array_size))
 
-        for index in range(array_size):
+        for index in range(self.array_size):
             self.data[index] = 0
 
     def get(self, x, y):
-        if (x >= self.width):
+        if (x >= self.width or x < 0):
             return None
 
-        if (y >= self.width):
+        if (y >= self.height or y < 0):
             return None
 
-        begin_index = x * y * self.ints_per_coordinate
+        begin_index = (x + (y * self.width)) * self.ints_per_coordinate
 
         is_nest = self.data[begin_index + self.nest_index]
         ant_count = self.data[begin_index + self.ant_count_index]
@@ -72,16 +91,16 @@ class World:
         if (not isinstance(field, Field)):
             return False
 
-        if (field.x >= self.width):
+        if (field.x >= self.width or field.x < 0):
             return False
 
-        if (field.y >= self.width):
+        if (field.y >= self.height or field.y < 0):
             return False
 
         if (len(field.player_food_levels) != self.player_count):
             return False
 
-        begin_index = field.x * field.y * self.ints_per_coordinate
+        begin_index = (field.x + (field.y * self.width)) * self.ints_per_coordinate
 
         self.data[begin_index + self.nest_index] = field.is_nest
         self.data[begin_index + self.ant_count_index] = field.ant_count
@@ -93,6 +112,10 @@ class World:
             self.data[begin_index + food_index] = field.player_food_levels[player_no]
 
         return True
+
+    def reset(self):
+        for index in range(self.array_size):
+            self.data[index] = 0
 
     def iprint(self):
 
@@ -112,15 +135,7 @@ class World:
         for x in range(self.width):
             for y in range(self.height):
                 field = self.get(x, y)
-                field.iprint()
+                field.print_small()
 
 
-
-
-
-
-# TODO: create/initialize empty coordinate system
-# TODO: get_neigbours
-# TODO: reset_pheromones
-# TODO: get content/data/?
-# TODO: set content/data/?
+# TODO: get_neigbours(self, x, y) / get_neigbours(self, field)
