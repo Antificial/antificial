@@ -4,6 +4,7 @@
 from .handler import run
 from .colony import *
 from .world import *
+from .game import *
 
 # Use this to set us up if called directly
 def main():

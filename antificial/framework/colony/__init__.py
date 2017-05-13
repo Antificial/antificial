@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-from framework.colony.Ant import *
+from framework.colony.Colony import *
 
 # Use this to set us up if called directly
 def main():

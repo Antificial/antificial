@@ -40,9 +40,9 @@ class Field:
 
 
 class World:
-    def __init__(self, width, height, player_count):
-        self.width = width
-        self.height = height
+    def __init__(self, grid_resolution, player_count):
+        self.width = grid_resolution[0]
+        self.height = grid_resolution[1]
         self.player_count = player_count
 
         """Amount of integers per coordinate:
