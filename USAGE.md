@@ -2,9 +2,9 @@ Usage
 ======
 TODO
 
-#### Tests
+## Tests
 
-## Run unit tests
+### Run unit tests
 ```
 python -m unittest discover antificial "*_test.py"
 ```
