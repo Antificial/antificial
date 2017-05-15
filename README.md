@@ -29,6 +29,9 @@ $ python main.py
 * [Kivy](https://kivy.org) Graphics Framework
 * [OpenCV](http://opencv.org) Computer Vision Library
 
+### Credit
+* Antificial Logo - Dave Keller [[Website]](http://www.davedesignsstuff.com) / [[Dribble]](https://dribbble.com/dabious)
+
 ## License
 * see [LICENSE](https://github.com/Antificial/antificial/blob/master/LICENSE) file
 

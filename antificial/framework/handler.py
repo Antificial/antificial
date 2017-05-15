@@ -89,7 +89,7 @@ def app_loop():
             print("[FW] Game State is %d" % GAME_STATE)
             FW_INPUT.send("[GAME_STATE] %d" % GAME_STATE)
             IR_CC_QUEUE.put("[GAME_STATE] %d" % GAME_STATE)
-            while not poll_for_keypress(32): # spacebar
+            while not poll_for_keypress(32) and RUNNING: # spacebar
                 handle_commands()
                 time.sleep(0.5)
             GAME_STATE = GAME_RUNNING
