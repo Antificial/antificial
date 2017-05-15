@@ -14,7 +14,7 @@ from kivy.uix.image import Image, AsyncImage
 from kivy.uix.scatter import Scatter
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.label import Label
-from kivy.properties import ObjectProperty, StringProperty
+from kivy.properties import ObjectProperty, StringProperty, NumericProperty
 from kivy.graphics.vertex_instructions import Line, Rectangle
 from kivy.graphics import Color, InstructionGroup
 from kivy.clock import Clock
@@ -78,11 +78,15 @@ Builder.load_string("""
         center_x: root.width / 2
         top: root.top - 150
         text: "---"
-    Button:
-        id: btn_quit
-        text: "Quit"
-        pos: 100, 100
-        size: 100, 100
+    StackLayout:
+        orientation: "lr-tb"
+        spacing: 10
+        size: root.width * 0.9, 75
+        pos: (root.width - (root.width * 0.9)) / 2, root.top / 2
+        Button:
+            id: btn_quit
+            text: "Quit"
+            size_hint: 1 / root.btns_per_row, 1
 """)
 
 class SplashWidget(Widget):
@@ -190,10 +194,13 @@ class EndWidget(Widget):
 class MenuWidget(Widget):
     dbg = ObjectProperty(None)
     btn_quit = ObjectProperty(None)
+    btns_per_row = NumericProperty(2)
 
     def __init__(self, **kwargs):
         super(MenuWidget, self).__init__(**kwargs)
-        self.btn_quit.on_press=self.quit
+        self.btn_quit.on_press = self.quit
+        btn_count = len([widget for widget in self.walk(restrict=True) if type(widget) is Button])
+        self.btns_per_row = btn_count if btn_count < self.btns_per_row else self.btns_per_row
 
     def quit(self):
         IR_CC_QUEUE.put("[CMD] done")
@@ -294,10 +301,6 @@ class AntificialApp(App):
         simulation_widget = SimulationWidget()
         end_widget = EndWidget()
         menu_widget = MenuWidget()
-
-        # btn_quit = Button(text='Quit')
-        # btn_quit.bind(on_press=menu_widget.btn_quit)
-        # menu_widget.add_widget(btn_quit)
 
         SCREEN_LIST[0].add_widget(splash_widget)
         SCREEN_LIST[1].add_widget(start_widget)
