@@ -27,7 +27,7 @@ Builder.load_string("""
     splash: splash_image
     AsyncImage:
         id: splash_image
-        size: root.width * 0.2, root.width * 0.2
+        size: root.width * root.scale, root.width * root.scale
         pos: root.width / 2 - root.splash.size[0] / 2, root.top / 2 + 10
     Label:
         id: title_label
@@ -93,6 +93,7 @@ class SplashWidget(Widget):
     title = ObjectProperty(None)
     subtitle = ObjectProperty(None)
     splash = ObjectProperty(None)
+    scale = NumericProperty(0.25)
 
     def __init__(self, **kwargs):
         super(SplashWidget, self).__init__(**kwargs)
