@@ -9,8 +9,13 @@ Antificial
 * [Version 0.1](https://github.com/Antificial/antificial/archive/master.zip)
 
 ## Usage
+It is recommended to use [virtualenv](https://pypi.python.org/pypi/virtualenv) with this project.
 ```
 $ git clone https://github.com/Antificial/antificial.git
+$ cd antificial
+$ virtualenv venv
+$ source venv/bin/activate
+$ pip install -r requirements.txt
 $ cd antificial/
 $ python main.py
 ```
