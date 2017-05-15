@@ -21,14 +21,14 @@ def shutdown():
 	print("[IR] Shutting down...")
 
 def handle_action(s):
+	s = str(s)
 	if s.startswith("[CMD]"):
 		cmd = s[6:]
-	if cmd == "done":
-		print("[IR] Quitting")
-		global RUNNING
-		RUNNING = False
+		if cmd == "done":
+			print("[IR] Quitting")
+			global RUNNING	
+			RUNNING = False
 	elif s.startswith("[GAME_STATE]"):
-		
 		global GAME_STATE
 		GAME_STATE = int(s[12:])
 
@@ -38,6 +38,7 @@ def handle_commands():
 		handle_action(input)
 	except:
 		pass
+		
 
 def getPointClosestTo(point, pointList):
 	x = point[0]
@@ -86,7 +87,9 @@ def configureBoundaries(grayscale, original, m, prevContour):
 			
 			gameBoardROI = cv2.warpPerspective(original,m,(960,540))
 
-	return gameBoardROI, m, prevContour
+			return (gameBoardROI, m, prevContour)
+			
+	return False
 
 def processData(ballCenters):
 
@@ -142,10 +145,10 @@ def processData(ballCenters):
 	return ballPositions
 
 def work():
-
+	global GAME_STATE, CAP
 	# Grab reference to the camera
 	cap = WebcamVideoStream(src=0).start()
-	settings = SettingThread().start()
+	
 	# Pre define global variables
 	m = False
 	prevContour = None
@@ -153,7 +156,6 @@ def work():
 	FPS = 15.
 	FPSCounter = 0
 	ballCenters = []
-	global GAME_STATE
 	# Main loop for image processing
 	while RUNNING:
 		begin = time.time()
@@ -167,10 +169,16 @@ def work():
 		# Get a copy to draw on without ruining the original image
 		drawOriginal = original.copy()
 		grayscaleOriginal = cv2.cvtColor(original, cv2.COLOR_BGR2GRAY)
-		cv2.imshow("drawOriginal", drawOriginal)
+		
 		if GAME_STATE == GAME_BEGIN:
+			if cv2.getWindowProperty('settings', 0) < 0:
+				settings = SettingThread().start()
+			
 			if isResizing:
-				gameBoardROI, m, prevContour = configureBoundaries(grayscaleOriginal, original, m, prevContour)
+				output = configureBoundaries(grayscaleOriginal, original, m, prevContour)
+				if output != False:
+					(gameBoardROI, m, prevContour) = output
+			cv2.imshow("gameBoardROI", gameBoardROI)
 			
 		if GAME_STATE == GAME_RUNNING:
 			print("running")
@@ -178,8 +186,6 @@ def work():
 			
 			if not isResizing:
 				gameBoardROI = cv2.warpPerspective(original,m,(960,540))
-
-
 
 			gameBoardROIGray = cv2.cvtColor(gameBoardROI, cv2.COLOR_BGR2GRAY)
 			gameBoardROIGray = cv2.GaussianBlur(gameBoardROIGray, (3,3),4)
@@ -210,6 +216,7 @@ def work():
 			cv2.imshow("gameBoardROIGray", gameBoardROIGray)
 
 			if FPSCounter == FPS-1:
+				
 				if len(ballCenters) > 0:
 					ballPositions = processData(ballCenters)
 					IR_INPUT.send(1)
@@ -225,11 +232,9 @@ def work():
 					cv2.imshow("gameBoardROIStatic", gameBoardROI)
 			
 			
+			
 		if GAME_STATE == GAME_END:
 			cv2.destroyAllWindows()
-			settings.stop()
-			cap.release()
-			cap.stop()
 			
 
 		end = time.time()
