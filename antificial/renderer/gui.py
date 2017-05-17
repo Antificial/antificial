@@ -6,7 +6,8 @@ from random import randint
 
 from kivy.app import App
 from kivy.lang import Builder
-from kivy.uix.screenmanager import ScreenManager, Screen
+from kivy.config import Config
+from kivy.uix.screenmanager import ScreenManager, Screen, FadeTransition, SlideTransition
 from kivy.core.window import Window
 from kivy.uix.widget import Widget
 from kivy.uix.button import Button
@@ -14,6 +15,7 @@ from kivy.uix.image import Image, AsyncImage
 from kivy.uix.scatter import Scatter
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.label import Label
+from kivy.uix.slider import Slider
 from kivy.properties import ObjectProperty, StringProperty, NumericProperty
 from kivy.graphics.vertex_instructions import Line, Rectangle
 from kivy.graphics import Color, InstructionGroup
@@ -72,21 +74,53 @@ Builder.load_string("""
 <MenuWidget>:
     dbg: dbg_label
     btn_quit: btn_quit
-    Label:
-        id: dbg_label
-        font_size: 70
-        center_x: root.width / 2
-        top: root.top - 150
-        text: "---"
-    StackLayout:
-        orientation: "lr-tb"
+    tick_slider: tick_slider
+    BoxLayout:
+        orientation: "horizontal"
         spacing: 10
-        size: root.width * 0.9, 75
-        pos: (root.width - (root.width * 0.9)) / 2, root.top / 2
+        size: root.width, root.height
+        GridLayout:
+            cols: 1
+            rows: 2
+            spacing: 10
+            padding: 10
+            row_default_height: 80
+            row_force_default: True
+            BoxLayout:
+                Label:
+                    size: self.texture_size
+                    font_size: 48
+                    text: "Ticks / Seconds"
+                Label:
+                    size: self.texture_size
+                    font_size: 48
+                    text:  str(tick_slider.value)
+            Slider:
+                id: tick_slider
+                min: 1
+                max: 20
+                step: 1
+                value: 10
+                value_track: True
+        BoxLayout:
+            spacing: 10
+            padding: 10
+            Label:
+                id: dbg_label
+                font_size: 70
+                size: self.texture_size
+                center_x: root.width / 2
+                top: root.top - 150
+                text: "0"
+    BoxLayout:
+        orientation: "horizontal"
+        spacing: 10
+        padding: 10
+        size: root.width, 100
         Button:
             id: btn_quit
             text: "Quit"
-            size_hint: 1 / root.btns_per_row, 1
+            size_hint: root.width / root.btn_count, 1
 """)
 
 class SplashWidget(Widget):
@@ -195,13 +229,17 @@ class EndWidget(Widget):
 class MenuWidget(Widget):
     dbg = ObjectProperty(None)
     btn_quit = ObjectProperty(None)
-    btns_per_row = NumericProperty(2)
+    tick_slider = ObjectProperty(None)
+    btn_count = NumericProperty(1)
 
     def __init__(self, **kwargs):
         super(MenuWidget, self).__init__(**kwargs)
         self.btn_quit.on_press = self.quit
-        btn_count = len([widget for widget in self.walk(restrict=True) if type(widget) is Button])
-        self.btns_per_row = btn_count if btn_count < self.btns_per_row else self.btns_per_row
+        self.btn_count = len([widget for widget in self.walk(restrict=True) if type(widget) is Button])
+        self.tick_slider.bind(value=self.on_tick_slider_change)
+
+    def on_tick_slider_change(self, instance, value):
+        FW_CC_QUEUE.put("[IPS] %d" % value)
 
     def quit(self):
         IR_CC_QUEUE.put("[CMD] done")
@@ -250,6 +288,10 @@ def change_screen(name):
     global CURRENT_SCREEN
     previous = index_of_screen(sm.current)
     new = index_of_screen(name)
+    if name == "end" or sm.current == "end":
+        sm.transition = FadeTransition()
+    else:
+        sm.transition = SlideTransition()
     direction = (new - previous) % len(SCREEN_LIST)
     if direction == 1:
         sm.transition.direction = "left"
@@ -282,6 +324,7 @@ sm = ScreenManager()
 SCREEN_LIST = [SplashScreen(name="splash"), StartScreen(name="start"), SimulationScreen(name="simulation"), EndScreen(name="end"), MenuScreen(name="menu")]
 for screen in SCREEN_LIST:
     sm.add_widget(screen)
+Config.set("kivy", "log_level", "warning") # one of: trace, debug, info, warning, error, critical
 
 class AntificialApp(App):
     def __init__(self, fw_output, ir_cc_queue, fw_cc_queue, world_data, grid_resolution, player_count, grid_size):
