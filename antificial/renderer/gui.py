@@ -234,15 +234,19 @@ class SimulationWidget(Widget):
         x, y = Window.size
         if DEBUG:
             self.fps.text = "%d FPS : RES: (%d, %d)" % (round(Clock.get_fps()), x, y)
+            if GAME_STATE == GAME_RUNNING:
+                TIME += 1
+                display_time = str(datetime.timedelta(seconds=TIME))
+                self.p1_time_label.text = display_time
+                self.p1_score_label.text = "Score: %03d" % SCORES[0]
+                self.p2_time_label.text = display_time
+                self.p2_score_label.text = "Score: %03d" % SCORES[1]
         else:
             self.fps.text = ""
-        if GAME_STATE == GAME_RUNNING:
-            TIME += 1
-            display_time = str(datetime.timedelta(seconds=TIME))
-            self.p1_time_label.text = display_time
-            self.p1_score_label.text = "Score: %03d" % SCORES[0]
-            self.p2_time_label.text = display_time
-            self.p2_score_label.text = "Score: %03d" % SCORES[1]
+            self.p1_time_label.text = ""
+            self.p1_score_label.text = ""
+            self.p2_time_label.text = ""
+            self.p2_score_label.text = ""
 
     def update(self, dt):
         with self.canvas:
@@ -386,7 +390,7 @@ sm = ScreenManager()
 SCREEN_LIST = [SplashScreen(name="splash"), StartScreen(name="start"), SimulationScreen(name="simulation"), EndScreen(name="end"), MenuScreen(name="menu")]
 for screen in SCREEN_LIST:
     sm.add_widget(screen)
-DEBUG = False
+DEBUG = True
 
 class AntificialApp(App):
     def __init__(self, fw_output, ir_cc_queue, fw_cc_queue, world_data, grid_resolution, player_count, grid_size):
