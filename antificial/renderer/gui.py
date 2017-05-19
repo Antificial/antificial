@@ -357,4 +357,13 @@ class AntificialApp(App):
         Clock.schedule_interval(simulation_widget.update_fps, 1.0 / 1.0)
         Clock.schedule_interval(simulation_widget.update, 1.0 / 10)
         Clock.schedule_interval(menu_widget.update_dbg, 1.0 / 1.0)
+
+        sm.bind(on_close=self._on_close)
+        Window.bind(on_close=self._on_close)
+
         return sm
+
+    def _on_close(self, *largs):
+        IR_CC_QUEUE.put("[CMD] done")
+        FW_CC_QUEUE.put("[CMD] done")
+        App.get_running_app().stop()
