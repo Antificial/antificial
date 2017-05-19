@@ -92,6 +92,9 @@ class World:
         self.height = grid_resolution[1]
         self.player_count = player_count
 
+        # keep track of the food coordinates (x, y, player_no) to make the updates easier
+        self.food_coordinates = []
+
         """Amount of integers per coordinate:
             1 to flag the nest (values: 0 - 1)
             1 for the ant count (values: 0 - max int)
@@ -101,7 +104,7 @@ class World:
         """
         self.ints_per_coordinate = 4 + self.player_count
 
-        """Index (position) of integers"""
+        # index (position) of integers
         self.nest_index = 0
         self.ant_count_index = 1
         self.home_pheromone_index = 2
@@ -149,10 +152,14 @@ class World:
         for player_no in range(self.player_count):
             food_index = self.player_food_indexes[player_no]
             self.data[begin_index + food_index] = field.player_food_levels[player_no]
+            if field.player_food_levels[player_no] > 0:
+                self.food_coordinates.append([field.x, field.y, player_no])
 
         return True
 
     def reset(self):
+        self.food_coordinates = []
+
         for index in range(self.array_size):
             self.data[index] = 0
 
@@ -244,7 +251,7 @@ class World:
             for y in range(self.height):
                 begin_index = self.get_field_begin_index(x, y)
 
-                """update home pheromone level"""
+                # update home pheromone level
                 current_level = self.data[begin_index + self.home_pheromone_index]
                 if current_level > 0:
                     updated_level = current_level - home_pheromone_decay_rate
@@ -253,7 +260,7 @@ class World:
 
                     self.data[begin_index + self.home_pheromone_index] = updated_level
 
-                """update food pheromone level"""
+                # update food pheromone level
                 current_level = self.data[begin_index + self.food_pheromone_index]
                 if current_level > 0:
                     updated_level = current_level - food_pheromone_decay_rate
@@ -264,7 +271,7 @@ class World:
 
         return True
 
-    """TOOD: replace x and y by Ant and Field objects?"""
+    # TOOD: replace x and y by Ant / Field objects?
     def move_ant(self, source_x, source_y, destination_x, destination_y):
         if not self.is_valid_coordinate(source_x, source_y):
             return False
@@ -275,18 +282,37 @@ class World:
         if source_x == destination_x and source_y == destination_y:
             return True
 
-        """decrease ant count in source field"""
+        # decrease ant count in source field
         source_begin_index = self.get_field_begin_index(source_x, source_y)
         ant_count = self.data[source_begin_index + self.ant_count_index]
         if ant_count > 0:
             self.data[source_begin_index + self.ant_count_index] = ant_count - 1
 
-        """increase ant count in destination field"""
+        # increase ant count in destination field
         destination_begin_index = self.get_field_begin_index(destination_x, destination_y)
         ant_count = self.data[destination_begin_index + self.ant_count_index]
         self.data[destination_begin_index + self.ant_count_index] = ant_count + 1
 
         return True
+
+    def update_food(self, new_food_coordinates):
+        # remove old food levels
+        for (x, y, player_no) in self.food_coordinates:
+            begin_index = self.get_field_begin_index(x, y)
+            for player_no in range(self.player_count):
+                food_index = self.player_food_indexes[player_no]
+                self.data[begin_index + food_index] = 0
+
+        # set new food levels
+        self.food_coordinates = new_food_coordinates
+
+        for (x, y, player_no) in new_food_coordinates:
+            if not self.is_valid_coordinate(x, y):
+                continue
+
+            begin_index = self.get_field_begin_index(x, y)
+            food_index = self.player_food_indexes[player_no]
+            self.data[begin_index + food_index] = 100
 
     def get_field_begin_index(self, x, y):
         if not self.is_valid_coordinate(x, y):
