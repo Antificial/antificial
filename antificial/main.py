@@ -1,6 +1,5 @@
 import image_recognition as ir
 import framework as fw
-import renderer as rr
 from util import *
 from multiprocessing import Process, Pipe, Queue, Array, set_start_method
 
@@ -23,6 +22,7 @@ def init():
 if __name__ == '__main__':
     set_start_method('spawn')
     try:
+        import renderer as rr
         irp, fwp, ir_cc_queue, fw_cc_queue, fw_output, world = init()
         irp.start()
         fwp.start()
