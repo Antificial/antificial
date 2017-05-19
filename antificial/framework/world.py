@@ -159,7 +159,6 @@ class World:
 
     def reset(self):
         self.food_coordinates = []
-
         for index in range(self.array_size):
             self.data[index] = 0
 
@@ -293,6 +292,7 @@ class World:
         return True
 
     def update_food(self, new_food_coordinates):
+        print(new_food_coordinates)
         # remove old food levels
         for (x, y, player_no) in self.food_coordinates:
             if not self.is_valid_coordinate(x, y):
@@ -343,7 +343,7 @@ class World:
         util.iprint("[World] data:")
 
         output = ""
-
+        
         for x in range(self.width):
             for y in range(self.height):
                 field = self.get(x, y)
