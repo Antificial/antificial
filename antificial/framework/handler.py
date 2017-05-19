@@ -109,6 +109,7 @@ def app_loop():
             game_loop()
             GAME_STATE = GAME_END
         if GAME_STATE == GAME_END and RUNNING:
+            WORLD.reset()
             print("[FW] Game State is %d" % GAME_STATE)
             FW_INPUT.send("[GAME_STATE] %d" % GAME_STATE)
             IR_CC_QUEUE.put("[GAME_STATE] %d" % GAME_STATE)

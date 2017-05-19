@@ -216,11 +216,13 @@ class SimulationWidget(Widget):
                 count += 1
                 if x % WIDTH == 0:
                     y += 1
+                y_inverted = HEIGHT - y - 1
                 if WORLD_DATA[i + 1] > 0:
-                    y_inverted = HEIGHT - y - 1
                     value = WORLD_DATA[i + 2]
                     alpha = WORLD_DATA[i + 2] / 256
                     self.cells[x][y_inverted].children[0].a = alpha
+                else:
+                    self.cells[x][y_inverted].children[0].a = 0
 
 class EndWidget(Widget):
     title = ObjectProperty(None)
