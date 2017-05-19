@@ -184,7 +184,7 @@ class StartWidget(Widget):
         pass
 
     def _on_keyboard_down(self, keyboard, keycode, text, modifiers):
-        global CURRENT_SCREEN
+        global CURRENT_SCREEN, DEBUG
         if keycode[0] == 276: # left arrow
             CURRENT_SCREEN = (CURRENT_SCREEN - 1) % len(SCREEN_LIST)
             change_screen(SCREEN_LIST[CURRENT_SCREEN].name)
@@ -193,6 +193,8 @@ class StartWidget(Widget):
             change_screen(SCREEN_LIST[CURRENT_SCREEN].name)
         elif keycode[0] == 32: # spacebar
             FW_CC_QUEUE.put("[KEY] %d" % keycode[0])
+        elif keycode[0] == 100: # D
+            DEBUG = not DEBUG
 
 class SimulationWidget(Widget):
     fps = ObjectProperty(None)
@@ -230,7 +232,10 @@ class SimulationWidget(Widget):
     def update_data(self, dt):
         global TIME, SCORE
         x, y = Window.size
-        self.fps.text = "%d FPS : RES: (%d, %d)" % (round(Clock.get_fps()), x, y)
+        if DEBUG:
+            self.fps.text = "%d FPS : RES: (%d, %d)" % (round(Clock.get_fps()), x, y)
+        else:
+            self.fps.text = ""
         if GAME_STATE == GAME_RUNNING:
             TIME += 1
             display_time = str(datetime.timedelta(seconds=TIME))
@@ -381,6 +386,7 @@ sm = ScreenManager()
 SCREEN_LIST = [SplashScreen(name="splash"), StartScreen(name="start"), SimulationScreen(name="simulation"), EndScreen(name="end"), MenuScreen(name="menu")]
 for screen in SCREEN_LIST:
     sm.add_widget(screen)
+DEBUG = False
 
 class AntificialApp(App):
     def __init__(self, fw_output, ir_cc_queue, fw_cc_queue, world_data, grid_resolution, player_count, grid_size):
