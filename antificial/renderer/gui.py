@@ -4,10 +4,15 @@ import util
 import time, math, os, datetime
 from random import randint
 
+from kivy.config import Config
+Config.set("graphics", "fullscreen", 0) # can be 0, 1 or 'auto'
+Config.set("graphics", "borderless", 0) # can be 0 or 1
+Config.set("graphics", "resizable", 1) # can be 0 or 1
+Config.set("graphics", "maxfps", 30) # speaks for itself, i guess
+Config.set("kivy", "log_level", "warning") # one of: trace, debug, info, warning, error, critical
 from kivy.app import App
 from kivy.lang import Builder
-from kivy.config import Config
-from kivy.uix.screenmanager import ScreenManager, Screen, FadeTransition, SlideTransition
+from kivy.uix.screenmanager import ScreenManager, Screen, FadeTransition, SlideTransition, RiseInTransition
 from kivy.core.window import Window
 from kivy.uix.widget import Widget
 from kivy.uix.button import Button
@@ -51,7 +56,7 @@ Builder.load_string("""
         font_size: 70
         center_x: root.width / 2
         top: root.top / 2
-        text: "Press [Spacebar] to play!"
+        text: "Press [Space] to play!"
 
 <SimulationWidget>:
     p1_time_label: p1_time_label
@@ -339,8 +344,8 @@ def change_screen(name):
     global CURRENT_SCREEN
     previous = index_of_screen(sm.current)
     new = index_of_screen(name)
-    if name == "end" or sm.current == "end":
-        sm.transition = FadeTransition()
+    if name == "end":
+        sm.transition = RiseInTransition()
     else:
         sm.transition = SlideTransition()
     direction = (new - previous) % len(SCREEN_LIST)
@@ -376,7 +381,6 @@ sm = ScreenManager()
 SCREEN_LIST = [SplashScreen(name="splash"), StartScreen(name="start"), SimulationScreen(name="simulation"), EndScreen(name="end"), MenuScreen(name="menu")]
 for screen in SCREEN_LIST:
     sm.add_widget(screen)
-Config.set("kivy", "log_level", "warning") # one of: trace, debug, info, warning, error, critical
 
 class AntificialApp(App):
     def __init__(self, fw_output, ir_cc_queue, fw_cc_queue, world_data, grid_resolution, player_count, grid_size):
