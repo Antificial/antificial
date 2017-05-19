@@ -90,7 +90,7 @@ Builder.load_string("""
                 Label:
                     size: self.texture_size
                     font_size: 48
-                    text: "Ticks / Seconds"
+                    text: "Ticks / Second"
                 Label:
                     size: self.texture_size
                     font_size: 48
@@ -172,17 +172,17 @@ class SimulationWidget(Widget):
         y = -1
         count = 0
         for i in range(0, len(WORLD_DATA), INTS_PER_FIELD):
-            if WORLD_DATA[i + 1] > 0:
-                x = (i - (count * INTS_PER_FIELD) + count) % WIDTH
-                count += 1
-                if x % WIDTH == 0:
-                    y += 1
-                alpha = WORLD_DATA[i + 2] / 256
-                g = InstructionGroup()
-                g.add(Color(256, 256, 256, alpha))
-                g.add(Rectangle(pos=(x * self.spacing_x, y * self.spacing_y), size=(self.spacing_x, self.spacing_y)))
-                self.canvas.add(g)
-                self.cells[x][y] = g
+            x = (i - (count * INTS_PER_FIELD) + count) % WIDTH
+            count += 1
+            if x % WIDTH == 0:
+                y += 1
+            y_inverted = HEIGHT - y - 1
+            alpha = WORLD_DATA[i + 2] / 256
+            g = InstructionGroup()
+            g.add(Color(256, 256, 256, alpha))
+            g.add(Rectangle(pos=(x * self.spacing_x, y_inverted * self.spacing_y), size=(self.spacing_x, self.spacing_y)))
+            self.canvas.add(g)
+            self.cells[x][y_inverted] = g
 
     def update_fps(self, dt):
         x, y = Window.size
@@ -212,13 +212,14 @@ class SimulationWidget(Widget):
             y = -1
             count = 0
             for i in range(0, len(WORLD_DATA), INTS_PER_FIELD):
-                if WORLD_DATA[i + 1] > 0:
-                    x = (i - (count * INTS_PER_FIELD) + count) % WIDTH
-                    count += 1
-                    if x % WIDTH == 0:
-                        y += 1
-                    alpha = WORLD_DATA[i + 2] / 256
-                    self.cells[x][y].children[0].a = alpha
+                x = (i - (count * INTS_PER_FIELD) + count) % WIDTH
+                count += 1
+                if x % WIDTH == 0:
+                    y += 1
+                y_inverted = HEIGHT - y - 1
+                value = WORLD_DATA[i + 2]
+                alpha = WORLD_DATA[i + 2] / 256
+                self.cells[x][y_inverted].children[0].a = alpha
 
 class EndWidget(Widget):
     title = ObjectProperty(None)
@@ -354,6 +355,6 @@ class AntificialApp(App):
 
         Clock.schedule_interval(poll, 1.0 / 1.0)
         Clock.schedule_interval(simulation_widget.update_fps, 1.0 / 1.0)
-        Clock.schedule_interval(simulation_widget.update, 1.0 / 1.0)
+        Clock.schedule_interval(simulation_widget.update, 1.0 / 10)
         Clock.schedule_interval(menu_widget.update_dbg, 1.0 / 1.0)
         return sm
