@@ -65,6 +65,12 @@ Builder.load_string("""
     p1_score_label: p1_score_label
     p2_time_label: p2_time_label
     p2_score_label: p2_score_label
+    canvas.before:
+        Color:
+            rgba: 1, 1, 1, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
     fps: fps_label
     Label:
         id: fps_label
@@ -224,9 +230,8 @@ class SimulationWidget(Widget):
             if x % WIDTH == 0:
                 y += 1
             y_inverted = HEIGHT - y - 1
-            alpha = WORLD_DATA[i + 2] / 256
             g = InstructionGroup()
-            g.add(Color(256, 256, 256, alpha))
+            g.add(Color(1, 1, 1, 1))
             g.add(Rectangle(pos=(x * self.spacing_x, y_inverted * self.spacing_y), size=(self.spacing_x, self.spacing_y)))
             self.canvas.add(g)
             self.cells[x][y_inverted] = g
@@ -279,15 +284,39 @@ class SimulationWidget(Widget):
                 if x % WIDTH == 0:
                     y += 1
                 y_inverted = HEIGHT - y - 1
-                if WORLD_DATA[i + 1] > 0:
-                    value = WORLD_DATA[i + 2]
-                    alpha = WORLD_DATA[i + 2] / 256
-                    self.cells[x][y_inverted].children[0].a = alpha
-                elif WORLD_DATA[i + 4] > 0:
-                    value = WORLD_DATA[i + 4]
-                    self.cells[x][y_inverted].children[0].a = value
+
+                is_nest = WORLD_DATA[i] > 0
+                ant_count = WORLD_DATA[i + 1]
+                home_pheromone_level = WORLD_DATA[i + 2]
+                food_pheromone_level = WORLD_DATA[i + 3]
+
+                self.cells[x][y_inverted].children[0] = Color(1, 1, 1, 1) # white
+
+                if is_nest:
+                    self.cells[x][y_inverted].children[0] = Color(0.5, 0.5, 0.5)
+                elif ant_count > 0:
+                    self.cells[x][y_inverted].children[0] = Color(0, 0, 0)
                 else:
-                    self.cells[x][y_inverted].children[0].a = 0
+                    has_food = False
+                    for player_index in range(PLAYER_COUNT):
+                        food_level = WORLD_DATA[i + 4 + player_index]
+                        if food_level > 0:
+                            has_food = True
+                            if player_index == 0:
+                                self.cells[x][y_inverted].children[0] = Color(0.5, 0, 0)
+                            elif player_index == 1:
+                                self.cells[x][y_inverted].children[0] = Color(0, 0.5, 0), Color(0, 0, 0.5)
+                            else:
+                                self.cells[x][y_inverted].children[0] = Color(0, 0, 0.5)
+
+                            self.cells[x][y_inverted].children[0].a = food_level / 255
+
+                    if not has_food:
+                        if SHOW_HOME_PHEROMONES and home_pheromone_level > 0:
+                            self.cells[x][y_inverted].children[0] = Color(0, 0, 1, home_pheromone_level / 255)
+
+                        if SHOW_FOOD_PHEROMONES and food_pheromone_level > 0:
+                            self.cells[x][y_inverted].children[0] = Color(0, 1, 0, food_pheromone_level / 255)
 
 class EndWidget(Widget):
     title = ObjectProperty(None)
@@ -379,6 +408,9 @@ class EndScreen(Screen):
 class MenuScreen(Screen):
     pass
 
+SHOW_HOME_PHEROMONES = True
+SHOW_FOOD_PHEROMONES = True
+
 CURRENT_SCREEN = 0
 GAME_BEGIN = 0
 GAME_RUNNING = 1
@@ -397,7 +429,7 @@ DEBUG = True
 class AntificialApp(App):
     def __init__(self, fw_output, ir_cc_queue, fw_cc_queue, world_data, grid_resolution, player_count, grid_size):
         super(AntificialApp, self).__init__()
-        global FW_OUTPUT, IR_CC_QUEUE, FW_CC_QUEUE, WORLD_DATA, WIDTH, HEIGHT, GRID_SIZE, INTS_PER_FIELD, SCORES
+        global FW_OUTPUT, IR_CC_QUEUE, FW_CC_QUEUE, WORLD_DATA, WIDTH, HEIGHT, GRID_SIZE, INTS_PER_FIELD, SCORES, PLAYER_COUNT
         FW_OUTPUT = fw_output
         IR_CC_QUEUE = ir_cc_queue
         FW_CC_QUEUE = fw_cc_queue
@@ -407,6 +439,7 @@ class AntificialApp(App):
         GRID_SIZE = grid_size
         INTS_PER_FIELD = 4 + player_count
         SCORES = [0 for i in range(player_count)]
+        PLAYER_COUNT = player_count
 
     def build(self):
         splash_widget = SplashWidget()
