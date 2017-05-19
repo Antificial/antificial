@@ -145,7 +145,7 @@ class World:
         self.data[begin_index + self.ant_count_index] = field.ant_count
         self.data[begin_index + self.home_pheromone_index] = field.home_pheromone_level
         self.data[begin_index + self.food_pheromone_index] = field.food_pheromone_level
-        
+
         for player_no in range(self.player_count):
             food_index = self.player_food_indexes[player_no]
             self.data[begin_index + food_index] = field.player_food_levels[player_no]
@@ -153,7 +153,8 @@ class World:
         return True
 
     def reset(self):
-        self.data = Array('i', self.array_size, lock=True)
+        for index in range(self.array_size):
+            self.data[index] = 0
 
     """Creates a matrix of fields depending on the smell_range.
 
