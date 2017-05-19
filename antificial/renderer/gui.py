@@ -205,9 +205,9 @@ class SimulationWidget(Widget):
                 # self.grid_x = []
                 # self.grid_y = []
                 # for i in range(0, WIDTH):
-                #     self.grid_x.append(Line(points=[i*self.spacing_x, 0, i*self.spacing_x, y], width=1))
+                #    self.grid_x.append(Line(points=[i*self.spacing_x, 0, i*self.spacing_x, y], width=1))
                 # for j in range(0, HEIGHT):
-                #     self.grid_y.append(Line(points=[0, j*self.spacing_y, x, j*self.spacing_y], width=1))
+                #    self.grid_y.append(Line(points=[0, j*self.spacing_y, x, j*self.spacing_y], width=1))
             x = 0
             y = -1
             count = 0
@@ -221,6 +221,9 @@ class SimulationWidget(Widget):
                     value = WORLD_DATA[i + 2]
                     alpha = WORLD_DATA[i + 2] / 256
                     self.cells[x][y_inverted].children[0].a = alpha
+                elif WORLD_DATA[i + 4] > 0:
+                    value = WORLD_DATA[i + 4]
+                    self.cells[x][y_inverted].children[0].a = value
                 else:
                     self.cells[x][y_inverted].children[0].a = 0
 
@@ -280,6 +283,9 @@ def poll(dt):
                     change_screen("end")
         else:
             NUMBER = input
+            
+        if isinstance(input, list):
+            print(input)
 
 def index_of_screen(name):
     for i, screen in enumerate(SCREEN_LIST):

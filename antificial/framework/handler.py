@@ -46,13 +46,23 @@ def handle_commands():
         handle_action(input)
     except:
         pass
-
+           
 def handle_pipe():
     if IR_OUTPUT.poll(TIMEOUT):
         input = IR_OUTPUT.recv()
         util.iprint("[FW] Received {input}!")
         util.iprint("[FW] Sending {input} to RR...")
-        FW_INPUT.send(input)
+        if isinstance(input, list):
+            global WORLD
+            WORLD.update_food(input)
+         
+        if isinstance(input, str):
+            if input.startswith("[KEY]"):
+                FW_CC_QUEUE.put(input)        
+                
+        # get field
+        # change food
+        # world set 
         # probably handle ball events here
         # analyse coordinate data and determine players
         # purge previous list of players and re-do
@@ -100,6 +110,7 @@ def app_loop():
             IR_CC_QUEUE.put("[GAME_STATE] %d" % GAME_STATE)
             while not poll_for_keypress(32) and RUNNING: # spacebar
                 handle_commands()
+                handle_pipe()
                 time.sleep(0.5)
             GAME_STATE = GAME_RUNNING
         if GAME_STATE == GAME_RUNNING and RUNNING:
@@ -115,7 +126,7 @@ def app_loop():
             IR_CC_QUEUE.put("[GAME_STATE] %d" % GAME_STATE)
             # for every player:
                 # FW_INPUT.send("[RESULTS] %d:%d" % (PLAYER, SCORE))
-            time.sleep(10)
+            time.sleep(1)
             GAME_STATE = GAME_BEGIN
 
 # Run this from other code
