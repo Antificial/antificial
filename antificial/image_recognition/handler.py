@@ -157,7 +157,7 @@ def convertToGameWorldCoordinates(ballPositions):
     for (x,y) in ballPositions:
         newX = int((x-XMIN)*(GRID_RESOLUTION[0]-1)/(XMAX-XMIN))
         newY = int((y-YMIN)*(GRID_RESOLUTION[1]-1)/(YMAX-YMIN))
-        gameCoordinates.append((newX,newY))
+        gameCoordinates.append((newX,newY, 0))
     return gameCoordinates
         
     
@@ -224,6 +224,8 @@ def work():
             gameBoardROI = cv2.warpPerspective(original,m,(960,540))
             startROI1 = cv2.cvtColor(gameBoardROI[20:160, 380:580], cv2.COLOR_BGR2GRAY)
             startROI2 = cv2.cvtColor(gameBoardROI[380:520, 380:580], cv2.COLOR_BGR2GRAY)
+            startROI1 = cv2.blur(startROI1, (3,3))
+            startROI2 = cv2.blur(startROI2, (3,3))
             
             _, thres1 = cv2.threshold(startROI1, 80, 255, cv2.THRESH_BINARY_INV)
             _, thres2 = cv2.threshold(startROI2, 80, 255, cv2.THRESH_BINARY_INV)
@@ -234,10 +236,21 @@ def work():
             cv2.drawContours(gameBoardROI, s1Contours, -1, (0,0,255))
             cv2.drawContours(gameBoardROI, s2Contours, -1, (0,0,255))
             
+            if len(s1Contours) > 0:
+                hull = cv2.convexHull(s1Contours[0], returnPoints = False)
+                if len(hull) > 0:
+                    defects = cv2.convexityDefects(s1Contours[0],hull)
+                    if defects is not None:
+                        if len(defects) == 6:
+                            IR_INPUT.send("[KEY] 32") # Virtual spacebar
+            
             if len(s2Contours) > 0:
-                hull = cv2.convexHull(s2Contours[0])
-                defects = cv2.
-                print(len(hull))
+                hull = cv2.convexHull(s2Contours[0], returnPoints = False)
+                if len(hull) > 0:
+                    defects = cv2.convexityDefects(s2Contours[0],hull)
+                    if defects is not None:
+                        if len(defects) == 6:
+                            IR_INPUT.send("[KEY] 32") # Virtual spacebar
             
             
             key = cv2.waitKey(1) & 0xFF
