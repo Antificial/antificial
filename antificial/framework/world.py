@@ -298,10 +298,12 @@ class World:
     def update_food(self, new_food_coordinates):
         # remove old food levels
         for (x, y, player_no) in self.food_coordinates:
+            if not self.is_valid_coordinate(x, y):
+                continue
+
             begin_index = self.get_field_begin_index(x, y)
-            for player_no in range(self.player_count):
-                food_index = self.player_food_indexes[player_no]
-                self.data[begin_index + food_index] = 0
+            food_index = self.player_food_indexes[player_no]
+            self.data[begin_index + food_index] = 0
 
         # set new food levels
         self.food_coordinates = new_food_coordinates
