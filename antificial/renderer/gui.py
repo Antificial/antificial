@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
 import util
-import time, math, os
+import time, math, os, datetime
 from random import randint
 
 from kivy.app import App
@@ -54,6 +54,10 @@ Builder.load_string("""
         text: "Press [Spacebar] to play!"
 
 <SimulationWidget>:
+    p1_time_label: p1_time_label
+    p1_score_label: p1_score_label
+    p2_time_label: p2_time_label
+    p2_score_label: p2_score_label
     fps: fps_label
     Label:
         id: fps_label
@@ -61,6 +65,38 @@ Builder.load_string("""
         center_x: root.width / 2
         top: root.top - 50
         text: "00 FPS"
+    ScatterLayout:
+        rotation: -90
+        center_y: root.height / 2
+        center_x: 0 + (p1_data.height / 2) + p1_data.spacing
+        BoxLayout:
+            id: p1_data
+            orientation: "vertical"
+            spacing: 40
+            Label:
+                id: p1_time_label
+                font_size: 70
+                text: "00:00:00"
+            Label:
+                id: p1_score_label
+                font_size: 70
+                text: "Score: 000"
+    ScatterLayout:
+        rotation: 90
+        center_y: root.height / 2
+        center_x: root.width - (p1_data.height / 2) - p1_data.spacing
+        BoxLayout:
+            id: p2_data
+            orientation: "vertical"
+            spacing: 40
+            Label:
+                id: p2_time_label
+                font_size: 70
+                text: "00:00:00"
+            Label:
+                id: p2_score_label
+                font_size: 70
+                text: "Score: 000"
 
 <EndWidget>:
     title: title_label
@@ -88,11 +124,9 @@ Builder.load_string("""
             row_force_default: True
             BoxLayout:
                 Label:
-                    size: self.texture_size
                     font_size: 48
                     text: "Ticks / Second"
                 Label:
-                    size: self.texture_size
                     font_size: 48
                     text:  str(tick_slider.value)
             Slider:
@@ -157,6 +191,10 @@ class StartWidget(Widget):
 
 class SimulationWidget(Widget):
     fps = ObjectProperty(None)
+    p1_time_label = ObjectProperty(None)
+    p2_time_label = ObjectProperty(None)
+    p1_score_label = ObjectProperty(None)
+    p2_score_label = ObjectProperty(None)
 
     def __init__(self, **kwargs):
         super(SimulationWidget, self).__init__(**kwargs)
@@ -184,9 +222,17 @@ class SimulationWidget(Widget):
             self.canvas.add(g)
             self.cells[x][y_inverted] = g
 
-    def update_fps(self, dt):
+    def update_data(self, dt):
+        global TIME, SCORE
         x, y = Window.size
         self.fps.text = "%d FPS : RES: (%d, %d)" % (round(Clock.get_fps()), x, y)
+        if GAME_STATE == GAME_RUNNING:
+            TIME += 1
+            display_time = str(datetime.timedelta(seconds=TIME))
+            self.p1_time_label.text = display_time
+            self.p1_score_label.text = "Score: %03d" % SCORES[0]
+            self.p2_time_label.text = display_time
+            self.p2_score_label.text = "Score: %03d" % SCORES[1]
 
     def update(self, dt):
         with self.canvas:
@@ -234,7 +280,6 @@ class EndWidget(Widget):
         super(EndWidget, self).__init__(**kwargs)
 
 class MenuWidget(Widget):
-    dbg = ObjectProperty(None)
     btn_quit = ObjectProperty(None)
     tick_slider = ObjectProperty(None)
     btn_count = NumericProperty(1)
@@ -253,10 +298,6 @@ class MenuWidget(Widget):
         FW_CC_QUEUE.put("[CMD] done")
         App.get_running_app().stop()
 
-    def update_dbg(self, dt):
-        x, y = Window.size
-        self.dbg.text = str(NUMBER)
-
 def get(x, y):
     if x >= WIDTH or y >= HEIGHT:
         s = "Index %d or %d is out of bounds." % (x, y)
@@ -268,7 +309,7 @@ def get(x, y):
     return values
 
 def poll(dt):
-    global NUMBER, CURRENT_SCREEN
+    global NUMBER, CURRENT_SCREEN, TIME, SCORES
     while FW_OUTPUT.poll():
         input = FW_OUTPUT.recv()
         if isinstance(input, str):
@@ -280,12 +321,12 @@ def poll(dt):
                 elif GAME_STATE == GAME_RUNNING:
                     change_screen("simulation")
                 elif GAME_STATE == GAME_END:
+                    TIME = 0
                     change_screen("end")
-        else:
-            NUMBER = input
-            
-        if isinstance(input, list):
-            print(input)
+            elif input.startswith("[SCORE]"):
+                player = int(input[:7].split(" ")[0])
+                score = int(input[:7].split(" ")[1])
+                SCORES[player] = score
 
 def index_of_screen(name):
     for i, screen in enumerate(SCREEN_LIST):
@@ -328,7 +369,8 @@ GAME_RUNNING = 1
 GAME_END = 2
 GAME_STOP = 3
 GAME_STATE = GAME_BEGIN
-NUMBER = 0
+TIME = 0
+SCORES = []
 ROOT_PATH = os.path.dirname(__file__)
 sm = ScreenManager()
 SCREEN_LIST = [SplashScreen(name="splash"), StartScreen(name="start"), SimulationScreen(name="simulation"), EndScreen(name="end"), MenuScreen(name="menu")]
@@ -339,7 +381,7 @@ Config.set("kivy", "log_level", "warning") # one of: trace, debug, info, warning
 class AntificialApp(App):
     def __init__(self, fw_output, ir_cc_queue, fw_cc_queue, world_data, grid_resolution, player_count, grid_size):
         super(AntificialApp, self).__init__()
-        global FW_OUTPUT, IR_CC_QUEUE, FW_CC_QUEUE, WORLD_DATA, WIDTH, HEIGHT, GRID_SIZE, INTS_PER_FIELD
+        global FW_OUTPUT, IR_CC_QUEUE, FW_CC_QUEUE, WORLD_DATA, WIDTH, HEIGHT, GRID_SIZE, INTS_PER_FIELD, SCORES
         FW_OUTPUT = fw_output
         IR_CC_QUEUE = ir_cc_queue
         FW_CC_QUEUE = fw_cc_queue
@@ -348,6 +390,7 @@ class AntificialApp(App):
         HEIGHT = grid_resolution[1]
         GRID_SIZE = grid_size
         INTS_PER_FIELD = 4 + player_count
+        SCORES = [0 for i in range(player_count)]
 
     def build(self):
         splash_widget = SplashWidget()
@@ -363,9 +406,8 @@ class AntificialApp(App):
         SCREEN_LIST[4].add_widget(menu_widget)
 
         Clock.schedule_interval(poll, 1.0 / 1.0)
-        Clock.schedule_interval(simulation_widget.update_fps, 1.0 / 1.0)
+        Clock.schedule_interval(simulation_widget.update_data, 1.0 / 1.0)
         Clock.schedule_interval(simulation_widget.update, 1.0 / 10)
-        Clock.schedule_interval(menu_widget.update_dbg, 1.0 / 1.0)
 
         sm.bind(on_close=self._on_close)
         Window.bind(on_close=self._on_close)
