@@ -164,28 +164,29 @@ class World:
             self.data[index] = 0
 
     """Creates a matrix of fields depending on the smell_range.
+    Borders are represented as "None".
 
     Examples:
         smell_range = 1 -> result = [
-                                        [None, None, None],
-                                        [None, None, None],
-                                        [None, None, None]
+                                        [Field, Field, Field],
+                                        [Field, AntF., Field],
+                                        [Field, Field, Field]
                                     ]
         smell_range = 2 -> result = [
-                                        [None, None, None, None, None],
-                                        [None, None, None, None, None],
-                                        [None, None, None, None, None],
-                                        [None, None, None, None, None],
-                                        [None, None, None, None, None]
+                                        [Field, Field, Field, Field, Field],
+                                        [Field, Field, Field, Field, Field],
+                                        [Field, Field, AntF., Field, Field],
+                                        [Field, Field, Field, Field, Field],
+                                        [Field, Field, Field, Field, Field]
                                     ]
         smell_range = 3 -> result = [
-                                        [None, None, None, None, None, None, None],
-                                        [None, None, None, None, None, None, None],
-                                        [None, None, None, None, None, None, None],
-                                        [None, None, None, None, None, None, None],
-                                        [None, None, None, None, None, None, None],
-                                        [None, None, None, None, None, None, None],
-                                        [None, None, None, None, None, None, None]
+                                        [Field, Field, Field, Field, Field, Field, Field],
+                                        [Field, Field, Field, Field, Field, Field, Field],
+                                        [Field, Field, Field, Field, Field, Field, Field],
+                                        [Field, Field, Field, AntF., Field, Field, Field],
+                                        [Field, Field, Field, Field, Field, Field, Field],
+                                        [Field, Field, Field, Field, Field, Field, Field],
+                                        [Field, Field, Field, Field, Field, Field, Field]
                                     ]
     """
     def get_neighbours(self, x, y, smell_range = 1):
@@ -195,28 +196,24 @@ class World:
         if smell_range < 1:
             return None
 
+        # be careful: min and max values can and will be outside of our coordinate system
         min_x = x - smell_range
         min_y = y - smell_range
         max_x = x + smell_range
         max_y = y + smell_range
 
-        if min_x < 0:
-            min_x = 0
+        neighbours_width = 1 + (2 * smell_range)
+        result = [[None for y in range(neighbours_width)] for x in range(neighbours_width)]
 
-        if min_y < 0:
-            min_y = 0
-
-        if max_x >= self.width:
-            max_x = self.width - 1
-
-        if max_y >= self.height:
-            max_y = self.height - 1
-
-        result = []
         for current_x in range(min_x, max_x + 1):
-            result.append([])
+            if current_x < 0 or current_x >= self.width:
+                continue
+
             for current_y in range(min_y, max_y + 1):
-                result[current_x - min_x].append(self.get(current_x, current_y))
+                if current_y < 0 or current_y >= self.height:
+                    continue
+
+                result[current_x - min_x][current_y - min_y] = self.get(current_x, current_y)
 
         return result
 
@@ -314,7 +311,7 @@ class World:
 
             begin_index = self.get_field_begin_index(x, y)
             food_index = self.player_food_indexes[player_no]
-            self.data[begin_index + food_index] = 100
+            self.data[begin_index + food_index] = 255
 
     def get_field_begin_index(self, x, y):
         if not self.is_valid_coordinate(x, y):

@@ -377,48 +377,66 @@ class TestWorld(unittest.TestCase):
         y = 0
         neighbours = self.world.get_neighbours(x, y)
         self.assertIsNotNone(neighbours)
-        self.assertEqual(len(neighbours), 2)
-        self.assertEqual(len(neighbours[0]), 2)
-        self.assertEqual(len(neighbours[1]), 2)
+        self.assertEqual(len(neighbours), 3)
+        self.assertEqual(len(neighbours[0]), 3)
+        self.assertEqual(len(neighbours[1]), 3)
+        self.assertEqual(len(neighbours[2]), 3)
 
-        self.assertEqual(neighbours[0][0], self.world.get(x    , y    ))
-        self.assertEqual(neighbours[1][0], self.world.get(x + 1, y    ))
+        self.assertIsNone(neighbours[0][0])
+        self.assertIsNone(neighbours[1][0])
+        self.assertIsNone(neighbours[2][0])
 
-        self.assertEqual(neighbours[0][1], self.world.get(x    , y + 1))
-        self.assertEqual(neighbours[1][1], self.world.get(x + 1, y + 1))
+        self.assertIsNone(neighbours[0][1])
+        self.assertEqual(neighbours[1][1], self.world.get(x    , y    ))
+        self.assertEqual(neighbours[2][1], self.world.get(x + 1, y    ))
+
+        self.assertIsNone(neighbours[0][2])
+        self.assertEqual(neighbours[1][2], self.world.get(x    , y + 1))
+        self.assertEqual(neighbours[2][2], self.world.get(x + 1, y + 1))
 
         # check endge case bottom right corner: x=width-1 y=height-1 smellrange=1
         x = self.width - 1
         y = self.height - 1
         neighbours = self.world.get_neighbours(x, y)
         self.assertIsNotNone(neighbours)
-        self.assertEqual(len(neighbours), 2)
-        self.assertEqual(len(neighbours[0]), 2)
-        self.assertEqual(len(neighbours[1]), 2)
+        self.assertEqual(len(neighbours), 3)
+        self.assertEqual(len(neighbours[0]), 3)
+        self.assertEqual(len(neighbours[1]), 3)
+        self.assertEqual(len(neighbours[2]), 3)
 
         self.assertEqual(neighbours[0][0], self.world.get(x - 1, y - 1))
         self.assertEqual(neighbours[1][0], self.world.get(x    , y - 1))
+        self.assertIsNone(neighbours[2][0])
 
         self.assertEqual(neighbours[0][1], self.world.get(x - 1, y    ))
         self.assertEqual(neighbours[1][1], self.world.get(x    , y    ))
+        self.assertIsNone(neighbours[2][1])
+
+        self.assertIsNone(neighbours[0][2])
+        self.assertIsNone(neighbours[1][2])
+        self.assertIsNone(neighbours[2][2])
 
         # check endge case left border: x=0 y=2 smellrange=1
         x = 0
         y = 2
         neighbours = self.world.get_neighbours(x, y)
         self.assertIsNotNone(neighbours)
-        self.assertEqual(len(neighbours), 2)
+        self.assertEqual(len(neighbours), 3)
         self.assertEqual(len(neighbours[0]), 3)
         self.assertEqual(len(neighbours[1]), 3)
+        self.assertEqual(len(neighbours[2]), 3)
 
-        self.assertEqual(neighbours[0][0], self.world.get(x    , y - 1))
-        self.assertEqual(neighbours[1][0], self.world.get(x + 1, y - 1))
+        self.assertIsNone(neighbours[0][0])
+        self.assertEqual(neighbours[1][0], self.world.get(x    , y - 1))
+        self.assertEqual(neighbours[2][0], self.world.get(x + 1, y - 1))
 
-        self.assertEqual(neighbours[0][1], self.world.get(x    , y    ))
-        self.assertEqual(neighbours[1][1], self.world.get(x + 1, y    ))
+        self.assertIsNone(neighbours[0][1])
+        self.assertEqual(neighbours[1][1], self.world.get(x    , y    ))
+        self.assertEqual(neighbours[2][1], self.world.get(x + 1, y    ))
 
-        self.assertEqual(neighbours[0][2], self.world.get(x    , y + 1))
-        self.assertEqual(neighbours[1][2], self.world.get(x + 1, y + 1))
+        self.assertIsNone(neighbours[0][2])
+        self.assertEqual(neighbours[1][2], self.world.get(x    , y + 1))
+        self.assertEqual(neighbours[2][2], self.world.get(x + 1, y + 1))
 
         # check endge case top border: x=2 y=0 smellrange=1
         x = 2
@@ -426,17 +444,21 @@ class TestWorld(unittest.TestCase):
         neighbours = self.world.get_neighbours(x, y)
         self.assertIsNotNone(neighbours)
         self.assertEqual(len(neighbours), 3)
-        self.assertEqual(len(neighbours[0]), 2)
-        self.assertEqual(len(neighbours[1]), 2)
-        self.assertEqual(len(neighbours[2]), 2)
+        self.assertEqual(len(neighbours[0]), 3)
+        self.assertEqual(len(neighbours[1]), 3)
+        self.assertEqual(len(neighbours[2]), 3)
 
-        self.assertEqual(neighbours[0][0], self.world.get(x - 1, y    ))
-        self.assertEqual(neighbours[1][0], self.world.get(x    , y    ))
-        self.assertEqual(neighbours[2][0], self.world.get(x + 1, y    ))
+        self.assertIsNone(neighbours[0][0])
+        self.assertIsNone(neighbours[1][0])
+        self.assertIsNone(neighbours[2][0])
 
-        self.assertEqual(neighbours[0][1], self.world.get(x - 1, y + 1))
-        self.assertEqual(neighbours[1][1], self.world.get(x    , y + 1))
-        self.assertEqual(neighbours[2][1], self.world.get(x + 1, y + 1))
+        self.assertEqual(neighbours[0][1], self.world.get(x - 1, y    ))
+        self.assertEqual(neighbours[1][1], self.world.get(x    , y    ))
+        self.assertEqual(neighbours[2][1], self.world.get(x + 1, y    ))
+
+        self.assertEqual(neighbours[0][2], self.world.get(x - 1, y + 1))
+        self.assertEqual(neighbours[1][2], self.world.get(x    , y + 1))
+        self.assertEqual(neighbours[2][2], self.world.get(x + 1, y + 1))
 
     def test_deposit_pheromone(self):
         # make sure the coordinate gets checked
@@ -541,7 +563,7 @@ class TestWorld(unittest.TestCase):
 
     def test_update_food(self):
         field = self.world.get(2, 2)
-        field.player_food_levels[0] = 100
+        field.player_food_levels[0] = 255
         self.assertTrue(self.world.set(field))
 
         food_coordinates = [[1, 1, 0]]
@@ -551,14 +573,14 @@ class TestWorld(unittest.TestCase):
         self.assertEqual(field.player_food_levels[0], 0)
 
         field = self.world.get(1, 1)
-        self.assertEqual(field.player_food_levels[0], 100)
+        self.assertEqual(field.player_food_levels[0], 255)
 
         # make sure invalid coordinates get sorted out
         food_coordinates = [[2, 2, 0], [-1, 0, 0], [0, -1, 0], [self.width, 0, 0], [0, self.height, 0]]
         self.world.update_food(food_coordinates)
 
         field = self.world.get(2, 2)
-        self.assertEqual(field.player_food_levels[0], 100)
+        self.assertEqual(field.player_food_levels[0], 255)
 
         field = self.world.get(1, 1)
         self.assertEqual(field.player_food_levels[0], 0)
