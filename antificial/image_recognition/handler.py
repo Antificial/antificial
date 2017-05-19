@@ -23,7 +23,7 @@ SHOW_DEBUG_WINDOWS = True
 
 class Settings(object):
     DP = 3
-    MinDistance = 26
+    MinDistance = 22
     CannyValue = 30
     Threshold = 50
     MinRadius = 13
@@ -152,15 +152,34 @@ def processData(ballCenters):
     return ballPositions
     
 def convertToGameWorldCoordinates(ballPositions):
-    global GRID_RESOLUTION, XMAX, XMIN, YMIN, YMAX
-    gameCoordinates = []
-    for (x,y) in ballPositions:
-        newX = int((x-XMIN)*(GRID_RESOLUTION[0]-1)/(XMAX-XMIN))
-        newY = int((y-YMIN)*(GRID_RESOLUTION[1]-1)/(YMAX-YMIN))
-        gameCoordinates.append((newX,newY, 0))
-    return gameCoordinates
+   global GRID_RESOLUTION, XMAX, XMIN, YMIN, YMAX
+   grid_width = GRID_RESOLUTION[0]
+   grid_heigth = GRID_RESOLUTION[1]
+
+   gameCoordinates = []
+   for (x,y) in ballPositions:
+       newX = int((x-XMIN)*(grid_width-1)/(XMAX-XMIN))
+       newY = int((y-YMIN)*(grid_heigth-1)/(YMAX-YMIN))
+
+       if newX == 0:
+           newX = 1
+
+       if newX == (grid_width - 1):
+           newX = grid_width - 2
+
+       if newY == 0:
+           newY = 1
+
+       if newY == (grid_heigth - 1):
+           newY = grid_heigth - 2
+
+       for currentX in range(newX - 1, newX + 2):
+           for currentY in range(newY - 1, newY + 2):
+               gameCoordinates.append((currentX, currentY, 0))
+
+   return gameCoordinates
         
-    
+        
 
 def init():
     global SETTINGS, SHOW_DEBUG_WINDOWS
@@ -169,7 +188,7 @@ def init():
     if SHOW_DEBUG_WINDOWS:
         cv2.namedWindow("settings")
         cv2.createTrackbar("DP", "settings", 3, 5, SETTINGS.updateDP)
-        cv2.createTrackbar("mindist", "settings", 26, 100, SETTINGS.updateMinDistance)
+        cv2.createTrackbar("mindist", "settings", 22, 100, SETTINGS.updateMinDistance)
         cv2.createTrackbar("cannyValue", "settings", 30, 250, SETTINGS.updateCannyValue)
         cv2.createTrackbar("threshold", "settings", 50, 75, SETTINGS.updateThreshold)
         cv2.createTrackbar("minR", "settings", 13, 100, SETTINGS.updateMinRadius)
@@ -222,34 +241,55 @@ def work():
                 stableBoundariesC += 1
 
             gameBoardROI = cv2.warpPerspective(original,m,(960,540))
-            startROI1 = cv2.cvtColor(gameBoardROI[20:160, 380:580], cv2.COLOR_BGR2GRAY)
-            startROI2 = cv2.cvtColor(gameBoardROI[380:520, 380:580], cv2.COLOR_BGR2GRAY)
-            startROI1 = cv2.blur(startROI1, (3,3))
-            startROI2 = cv2.blur(startROI2, (3,3))
+            startROI1 = gameBoardROI[20:160, 380:580]
+            startROI2 = gameBoardROI[380:520, 380:580]
+            s1g = cv2.cvtColor(startROI1, cv2.COLOR_BGR2GRAY)
+            s2g = cv2.cvtColor(startROI2, cv2.COLOR_BGR2GRAY)
             
-            _, thres1 = cv2.threshold(startROI1, 80, 255, cv2.THRESH_BINARY_INV)
-            _, thres2 = cv2.threshold(startROI2, 80, 255, cv2.THRESH_BINARY_INV)
+
+            s1g = cv2.GaussianBlur(s1g, (9,9), 0)
+            s2g = cv2.GaussianBlur(s2g, (9,9), 0)
+            
+            _, thres1 = cv2.threshold(s1g, 80, 255, cv2.THRESH_BINARY_INV)
+            _, thres2 = cv2.threshold(s2g, 80, 255, cv2.THRESH_BINARY_INV)
+            
+            kernel = np.ones((5,5),np.uint8)
+            #thres1 = cv2.erode(thres1, kernel, iterations = 1)
+            #thres2 = cv2.erode(thres2, kernel, iterations = 1)
+            #thres1 = cv2.blur(thres1, (5,5))
+            #thres2 = cv2.blur(thres2, (5,5))
             
             _, s1Contours,_ = cv2.findContours(thres1.copy(),cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
             _, s2Contours,_ = cv2.findContours(thres2.copy(),cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
             
-            cv2.drawContours(gameBoardROI, s1Contours, -1, (0,0,255))
-            cv2.drawContours(gameBoardROI, s2Contours, -1, (0,0,255))
+            s1Contours = sorted(s1Contours, key = cv2.contourArea, reverse = True)[:1]
+            s2Contours = sorted(s2Contours, key = cv2.contourArea, reverse = True)[:1]
+            
+            cv2.drawContours(startROI1, s1Contours, -1, (0,0,255))
+            cv2.drawContours(startROI2, s2Contours, -1, (0,0,255))
+            
             
             if len(s1Contours) > 0:
                 hull = cv2.convexHull(s1Contours[0], returnPoints = False)
+                hulld = cv2.convexHull(s1Contours[0], returnPoints = True)
+                
                 if len(hull) > 0:
+                    cv2.drawContours(startROI1, [hulld], 0, (0,255,0))
                     defects = cv2.convexityDefects(s1Contours[0],hull)
                     if defects is not None:
                         if len(defects) == 6:
+                            print("Virtual spacebar")
                             IR_INPUT.send("[KEY] 32") # Virtual spacebar
             
             if len(s2Contours) > 0:
                 hull = cv2.convexHull(s2Contours[0], returnPoints = False)
+                hulld = cv2.convexHull(s2Contours[0], returnPoints = True)
                 if len(hull) > 0:
+                    cv2.drawContours(startROI2, [hulld], 0, (0,255,0))
                     defects = cv2.convexityDefects(s2Contours[0],hull)
                     if defects is not None:
                         if len(defects) == 6:
+                            print("Virtual spacebar")
                             IR_INPUT.send("[KEY] 32") # Virtual spacebar
             
             
@@ -289,14 +329,15 @@ def work():
             dpValue, minDist, cannyValue, threshold, minR, maxR = SETTINGS.get()
             circles = cv2.HoughCircles(gameBoardROIGray, cv2.HOUGH_GRADIENT, dpValue, minDist, param1 = cannyValue, param2 = threshold, minRadius = minR, maxRadius = maxR)
 
-            if len(circles) > 0:
+            if circles is not None:
+                circles = circles[0,:16]
                 ballCenters.append([])
-                for i in circles[0,:20]:
+                for i in circles:
                     cv2.circle(gameBoardROI,(i[0],i[1]),i[2],(0,255,0),2)
                     cv2.circle(gameBoardROI,(i[0],i[1]),2,(0,0,255),3)
                     ballCenters[-1].append((i[0],i[1]))
 
-                ballCenters[-1].append(len(circles[0]))
+                ballCenters[-1].append(len(circles))
 
             if SHOW_DEBUG_WINDOWS:
                 cv2.imshow("drawOriginal", drawOriginal)

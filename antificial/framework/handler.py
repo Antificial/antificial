@@ -15,7 +15,7 @@ GAME_RUNNING = 1
 GAME_END = 2
 GAME_STOP = 3
 GAME_STATE = GAME_BEGIN
-GAME_DURATION = 5 # in seconds
+GAME_DURATION = 40 # in seconds
 # Game Data
 COLONY = None
 GAMERULES = None
