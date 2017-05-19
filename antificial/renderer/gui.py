@@ -67,7 +67,7 @@ Builder.load_string("""
     p2_score_label: p2_score_label
     canvas.before:
         Color:
-            rgba: 1, 1, 1, 1
+            rgba: 0, 0, 0, 1
         Rectangle:
             pos: self.pos
             size: self.size
@@ -231,7 +231,8 @@ class SimulationWidget(Widget):
                 y += 1
             y_inverted = HEIGHT - y - 1
             g = InstructionGroup()
-            g.add(Color(1, 1, 1, 1))
+            #g.add(Color(1, 1, 1, 1)) # white
+            g.add(Color(0, 0, 0, 1)) # black
             g.add(Rectangle(pos=(x * self.spacing_x, y_inverted * self.spacing_y), size=(self.spacing_x, self.spacing_y)))
             self.canvas.add(g)
             self.cells[x][y_inverted] = g
@@ -290,12 +291,13 @@ class SimulationWidget(Widget):
                 home_pheromone_level = WORLD_DATA[i + 2]
                 food_pheromone_level = WORLD_DATA[i + 3]
 
-                self.cells[x][y_inverted].children[0] = Color(1, 1, 1, 1) # white
+                #self.cells[x][y_inverted].children[0] = Color(1, 1, 1, 1) # white
+                self.cells[x][y_inverted].children[0] = Color(0, 0, 0, 1) # black
 
                 if is_nest:
                     self.cells[x][y_inverted].children[0] = Color(0.5, 0.5, 0.5)
                 elif ant_count > 0:
-                    self.cells[x][y_inverted].children[0] = Color(0, 0, 0)
+                    self.cells[x][y_inverted].children[0] = Color(1, 1, 1)
                 else:
                     has_food = False
                     for player_index in range(PLAYER_COUNT):
@@ -460,7 +462,9 @@ class AntificialApp(App):
 
         sm.bind(on_close=self._on_close)
         Window.bind(on_close=self._on_close)
-        Window.left = +1920
+
+        # projector mode:
+        #Window.left = +1920
         return sm
 
     def _on_close(self, *largs):
