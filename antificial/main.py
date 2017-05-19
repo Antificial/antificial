@@ -22,7 +22,7 @@ def init():
             f.ant_count = 100
             f.home_pheromone_level = 100
             world.set(f)
-    irp = Process(target=ir.run, args=(ir_cc_queue, ir_input, RESOLUTION, GRID_SIZE))
+    irp = Process(target=ir.run, args=(ir_cc_queue, ir_input, GRID_RESOLUTION))
     fwp = Process(target=fw.run, args=(ir_cc_queue, fw_cc_queue, ir_output, fw_input, world, HOME))
     return irp, fwp, ir_cc_queue, fw_cc_queue, fw_output, world
 
