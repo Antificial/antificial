@@ -109,7 +109,7 @@ class World:
         self.player_food_indexes = range(4, 4 + self.player_count)
 
         self.array_size = self.width * self.height * self.ints_per_coordinate
-        self.data = Array('i', [randint(1,256) for i in range(self.array_size)])
+        self.data = Array('i', [0 for i in range(self.array_size)])
 
     def get(self, x, y):
         if not self.is_valid_coordinate(x, y):

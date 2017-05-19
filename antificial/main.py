@@ -2,9 +2,10 @@ import image_recognition as ir
 import framework as fw
 from util import *
 from multiprocessing import Process, Pipe, Queue, Array, set_start_method
+from random import randint
 
 GRID_SIZE = 15
-RESOLUTION = (100, 100)
+RESOLUTION = (1920, 1080)
 GRID_RESOLUTION = (int(RESOLUTION[0] / GRID_SIZE), int(RESOLUTION[1] / GRID_SIZE)) # pre-compute this
 PLAYER_COUNT = 2
 HOME = (int(GRID_RESOLUTION[0] / 2), int(GRID_RESOLUTION[1] / 2)) # center home for now
@@ -15,6 +16,12 @@ def init():
     ir_input, ir_output = Pipe() # For IPC
     fw_input, fw_output = Pipe() # Likewise
     world = fw.World(GRID_RESOLUTION, PLAYER_COUNT)
+    for x in range(20):
+        for y in range(20):
+            f = world.get(randint(0, GRID_RESOLUTION[0]-1), randint(0, GRID_RESOLUTION[1]-1))
+            f.ant_count = 100
+            f.home_pheromone_level = 100
+            world.set(f)
     irp = Process(target=ir.run, args=(ir_cc_queue, ir_input, RESOLUTION, GRID_SIZE))
     fwp = Process(target=fw.run, args=(ir_cc_queue, fw_cc_queue, ir_output, fw_input, world, HOME))
     return irp, fwp, ir_cc_queue, fw_cc_queue, fw_output, world
