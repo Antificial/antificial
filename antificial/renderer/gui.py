@@ -146,10 +146,10 @@ class StartWidget(Widget):
 
     def _on_keyboard_down(self, keyboard, keycode, text, modifiers):
         global CURRENT_SCREEN
-        if keycode[0] == 276:
+        if keycode[0] == 276: # left arrow
             CURRENT_SCREEN = (CURRENT_SCREEN - 1) % len(SCREEN_LIST)
             change_screen(SCREEN_LIST[CURRENT_SCREEN].name)
-        elif keycode[0] == 275:
+        elif keycode[0] == 275: # right arrow
             CURRENT_SCREEN = (CURRENT_SCREEN + 1) % len(SCREEN_LIST)
             change_screen(SCREEN_LIST[CURRENT_SCREEN].name)
         elif keycode[0] == 32: # spacebar
