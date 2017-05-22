@@ -3,6 +3,8 @@
 import util
 import time, math, os, datetime
 from random import randint
+
+# TODO: replace this with push through queue?
 from framework import handler
 
 PROJECTOR_MODE = False
@@ -331,10 +333,14 @@ class SimulationWidget(Widget):
                                 self.cells[x][y_inverted].children[0].rgba = [0, 0, 1, food_level / 255]
 
                     if not has_food:
-                        if SHOW_HOME_PHEROMONES and home_pheromone_level > 0:
+                        display_home_pheromone = SHOW_HOME_PHEROMONES and home_pheromone_level > 0
+                        display_food_pheromone = SHOW_FOOD_PHEROMONES and food_pheromone_level > 0
+                        if display_home_pheromone and display_food_pheromone:
+                            alpha = ((food_pheromone_level / 255) + (home_pheromone_level / 255)) / 2
+                            self.cells[x][y_inverted].children[0].rgba = [0, 1, 1, alpha]
+                        elif display_home_pheromone:
                             self.cells[x][y_inverted].children[0].rgba = [0, 0, 1, home_pheromone_level / 255]
-
-                        if SHOW_FOOD_PHEROMONES and food_pheromone_level > 0:
+                        elif display_food_pheromone:
                             self.cells[x][y_inverted].children[0].rgba = [0, 1, 0, food_pheromone_level / 255]
 
 class EndWidget(Widget):
