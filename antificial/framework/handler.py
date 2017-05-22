@@ -52,6 +52,8 @@ def handle_commands():
 def handle_pipe():
     if IR_OUTPUT.poll(TIMEOUT):
         input = IR_OUTPUT.recv()
+        #util.iprint("[FW] Received {input}!")
+        #util.iprint("[FW] Sending {input} to RR...")
         if isinstance(input, list):
             global WORLD
             WORLD.update_food(input)

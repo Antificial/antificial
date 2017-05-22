@@ -193,19 +193,22 @@ def init():
 
 def getVideoFeed(src=0):
     stream = cv2.VideoCapture(src)
-    stream.set(3, 1280)
-    stream.set(4, 720)
+    #stream.set(3, 1280)
+    #stream.set(4, 720)
     return stream
 
 def work():
     isResizing = True
     m = False
     prevContour = None
-    FPS = 15.
+    FPS = 20.
     FPSCounter = 0
     stableBoundariesC = 0
     ballCenters = []
-    stream = getVideoFeed(0)
+    stream = getVideoFeed(1)
+    startSignalSend = False
+    maxC = [60,155,255] 
+    minC = [43,112,184]
 
     while RUNNING:
         handle_commands()
@@ -236,25 +239,24 @@ def work():
                 if stableBoundariesC == 20:
                     isResizing = False
                 stableBoundariesC += 1
+                continue
 
             gameBoardROI = cv2.warpPerspective(original,m,(960,540))
-            startROI1 = gameBoardROI[20:160, 380:580]
-            startROI2 = gameBoardROI[380:520, 380:580]
+            startROI1 = gameBoardROI[20:160, 360:600]
+            startROI2 = gameBoardROI[380:520, 360:600]
             s1g = cv2.cvtColor(startROI1, cv2.COLOR_BGR2GRAY)
             s2g = cv2.cvtColor(startROI2, cv2.COLOR_BGR2GRAY)
             
 
-            s1g = cv2.GaussianBlur(s1g, (9,9), 0)
-            s2g = cv2.GaussianBlur(s2g, (9,9), 0)
+            s1g = cv2.GaussianBlur(s1g, (13,13), 0)
+            s2g = cv2.GaussianBlur(s2g, (13,13), 0)
             
-            _, thres1 = cv2.threshold(s1g, 80, 255, cv2.THRESH_BINARY_INV)
-            _, thres2 = cv2.threshold(s2g, 80, 255, cv2.THRESH_BINARY_INV)
+            thres1 = cv2.adaptiveThreshold(s1g, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
+            thres2 = cv2.adaptiveThreshold(s2g, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
             
-            kernel = np.ones((5,5),np.uint8)
-            #thres1 = cv2.erode(thres1, kernel, iterations = 1)
-            #thres2 = cv2.erode(thres2, kernel, iterations = 1)
-            #thres1 = cv2.blur(thres1, (5,5))
-            #thres2 = cv2.blur(thres2, (5,5))
+            #_, thres1 = cv2.threshold(s1g, 60, 255, cv2.THRESH_BINARY_INV)
+            #_, thres2 = cv2.threshold(s2g, 60, 255, cv2.THRESH_BINARY_INV)
+            
             
             _, s1Contours,_ = cv2.findContours(thres1.copy(),cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
             _, s2Contours,_ = cv2.findContours(thres2.copy(),cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
@@ -265,44 +267,44 @@ def work():
             cv2.drawContours(startROI1, s1Contours, -1, (0,0,255))
             cv2.drawContours(startROI2, s2Contours, -1, (0,0,255))
             
+
+            numDefects = 6
             
-            if len(s1Contours) > 0:
-                hull = cv2.convexHull(s1Contours[0], returnPoints = False)
-                hulld = cv2.convexHull(s1Contours[0], returnPoints = True)
+            if not startSignalSend:
+                if len(s1Contours) > 0:
+                    hull = cv2.convexHull(s1Contours[0], returnPoints = False)
+                    hulld = cv2.convexHull(s1Contours[0], returnPoints = True)
+                    
+                    if len(hull) > 0:
+                        cv2.drawContours(startROI1, [hulld], 0, (0,255,0))
+                        defects = cv2.convexityDefects(s1Contours[0],hull)
+                        if defects is not None:
+                            if len(defects) == numDefects:
+                                print("Virtual spacebar")
+                                IR_INPUT.send("[KEY] 32") # Virtual spacebar
+                                startSignalSend = True
                 
-                if len(hull) > 0:
-                    cv2.drawContours(startROI1, [hulld], 0, (0,255,0))
-                    defects = cv2.convexityDefects(s1Contours[0],hull)
-                    if defects is not None:
-                        if len(defects) == 6:
-                            print("Virtual spacebar")
-                            IR_INPUT.send("[KEY] 32") # Virtual spacebar
+                if len(s2Contours) > 0:
+                    hull = cv2.convexHull(s2Contours[0], returnPoints = False)
+                    hulld = cv2.convexHull(s2Contours[0], returnPoints = True)
+                    if len(hull) > 0:
+                        cv2.drawContours(startROI2, [hulld], 0, (0,255,0))
+                        defects = cv2.convexityDefects(s2Contours[0],hull)
+                        if defects is not None:
+                            if len(defects) == numDefects:
+                                print("Virtual spacebar")
+                                IR_INPUT.send("[KEY] 32") # Virtual spacebar
+                                startSignalSend = True
             
-            if len(s2Contours) > 0:
-                hull = cv2.convexHull(s2Contours[0], returnPoints = False)
-                hulld = cv2.convexHull(s2Contours[0], returnPoints = True)
-                if len(hull) > 0:
-                    cv2.drawContours(startROI2, [hulld], 0, (0,255,0))
-                    defects = cv2.convexityDefects(s2Contours[0],hull)
-                    if defects is not None:
-                        if len(defects) == 6:
-                            print("Virtual spacebar")
-                            IR_INPUT.send("[KEY] 32") # Virtual spacebar
-            
-            
-            key = cv2.waitKey(1) & 0xFF
-            if key == ord("p"): 
-                print("p is pressed")
-                IR_INPUT.send("[KEY] 32") # Virtual spacebar
                 
             if SHOW_DEBUG_WINDOWS:
-                cv2.imshow("startROI1", startROI1)
-                cv2.imshow("startROI2", startROI2)
+                cv2.imshow("startROI1", s1g)
+                cv2.imshow("startROI2", s2g)
                 cv2.imshow("thres1", thres1)
                 cv2.imshow("thres2", thres2)
                 cv2.imshow("gameBoardROI", gameBoardROI)
 
-            #time.sleep(0.1) # let's not waste too much cpu time, relax for a bit
+            time.sleep(0.2) # let's not waste too much cpu time, relax for a bit
             begin = time.time()
 
         if GAME_STATE == GAME_RUNNING:
@@ -314,6 +316,10 @@ def work():
             if not isResizing:
                 gameBoardROI = cv2.warpPerspective(original,m,(960,540))
 
+                
+            mask = cv2.inRange(gameBoardROI, minC, maxC)
+            colorRange = cv2.bitwise_and(gameBoardROI, gameBoardROI, mask = mask)
+                
             gameBoardROIGray = cv2.cvtColor(gameBoardROI, cv2.COLOR_BGR2GRAY)
             gameBoardROIGray = cv2.GaussianBlur(gameBoardROIGray, (3,3),4)
             gameBoardROIGray = cv2.erode(gameBoardROIGray, (20,20))
@@ -340,6 +346,8 @@ def work():
                 cv2.imshow("drawOriginal", drawOriginal)
                 cv2.imshow("gameBoardROI", gameBoardROI)
                 cv2.imshow("gameBoardROIGray", gameBoardROIGray)
+                cv2.imshow("colorRange", colorRange)
+                
 
             if FPSCounter == FPS-1:
                 if len(ballCenters) > 0:

@@ -10,7 +10,7 @@ PROJECTOR_MODE = False
 from kivy.config import Config
 Config.set("kivy", "log_level", "warning") # one of: trace, debug, info, warning, error, critical
 if PROJECTOR_MODE:
-    Config.set("graphics", "fullscreen", "fake") # can be 0, 1 or 'auto'
+    Config.set("graphics", "fullscreen", 0) # can be 0, 1 or 'auto'
     Config.set("graphics", "borderless", 1) # can be 0 or 1
     Config.set("graphics", "width", 1920) # can be 0 or 1
     Config.set("graphics", "height", 1080) # can be 0 or 1
