@@ -4,7 +4,7 @@ import util
 import time, math, os, datetime
 from random import randint
 
-PROJECTOR_MODE = True
+PROJECTOR_MODE = False
 
 from kivy.config import Config
 Config.set("kivy", "log_level", "warning") # one of: trace, debug, info, warning, error, critical
@@ -309,13 +309,13 @@ class SimulationWidget(Widget):
                 home_pheromone_level = WORLD_DATA[i + 2]
                 food_pheromone_level = WORLD_DATA[i + 3]
 
-                #self.cells[x][y_inverted].children[0] = WHITE
-                self.cells[x][y_inverted].children[0] = BLACK
+                #self.cells[x][y_inverted].children[0].rgb = [1, 1, 1]
+                self.cells[x][y_inverted].children[0].rgb = [0, 0, 0]
 
                 if is_nest:
-                    self.cells[x][y_inverted].children[0] = GRAY
+                    self.cells[x][y_inverted].children[0].rgb = [0.5, 0.5, 0.5]
                 elif ant_count > 0:
-                    self.cells[x][y_inverted].children[0] = WHITE
+                    self.cells[x][y_inverted].children[0].rgb = [1, 1, 1]
                 else:
                     has_food = False
                     for player_index in range(PLAYER_COUNT):
