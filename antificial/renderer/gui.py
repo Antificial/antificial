@@ -75,19 +75,22 @@ Builder.load_string("""
     p1_score_label: p1_score_label
     p2_time_label: p2_time_label
     p2_score_label: p2_score_label
-    canvas.before:
-        Color:
-            rgba: 0, 0, 0, 1
-        Rectangle:
-            pos: self.pos
-            size: self.size
     fps: fps_label
+    ScatterLayout:
+        id: grid_layout
+        canvas.before:
+            Color:
+                rgba: 0, 0, 0, 1
+            Rectangle:
+                pos: self.pos
+                size: self.size
     Label:
         id: fps_label
         font_size: 70
         center_x: root.width / 2
         top: root.top - 50
         text: "00 FPS"
+        color: 1, 1, 1, 1
     ScatterLayout:
         rotation: -90
         center_y: root.height / 2
@@ -100,10 +103,12 @@ Builder.load_string("""
                 id: p1_time_label
                 font_size: 70
                 text: "00:00:00"
+                color: 1, 1, 1, 1
             Label:
                 id: p1_score_label
                 font_size: 70
                 text: "Score: 000"
+                color: 1, 1, 1, 1
     ScatterLayout:
         rotation: 90
         center_y: root.height / 2
@@ -116,10 +121,12 @@ Builder.load_string("""
                 id: p2_time_label
                 font_size: 70
                 text: "00:00:00"
+                color: 1, 1, 1, 1
             Label:
                 id: p2_score_label
                 font_size: 70
                 text: "Score: 000"
+                color: 1, 1, 1, 1
 
 <EndWidget>:
     title: title_label
@@ -244,11 +251,11 @@ class SimulationWidget(Widget):
             #g.add(Color(1, 1, 1, 1)) # white
             g.add(Color(0, 0, 0, 1)) # black
             g.add(Rectangle(pos=(x * self.spacing_x, y_inverted * self.spacing_y), size=(self.spacing_x, self.spacing_y)))
-            self.canvas.add(g)
+            self.ids["grid_layout"].canvas.add(g)
             self.cells[x][y_inverted] = g
 
     def update_data(self, dt):
-        global TIME, SCORE
+        global DEBUG, TIME, SCORE
         x, y = Window.size
         if DEBUG:
             self.fps.text = "%d FPS : RES: (%d, %d)" % (round(Clock.get_fps()), x, y)
@@ -301,10 +308,9 @@ class SimulationWidget(Widget):
                 ant_count = WORLD_DATA[i + 1]
                 home_pheromone_level = WORLD_DATA[i + 2]
                 food_pheromone_level = WORLD_DATA[i + 3]
-                
 
-                #self.cells[x][y_inverted].children[0] = Color(1, 1, 1, 1) # white
-                self.cells[x][y_inverted].children[0] = BLACK # black
+                #self.cells[x][y_inverted].children[0] = WHITE
+                self.cells[x][y_inverted].children[0] = BLACK
 
                 if is_nest:
                     self.cells[x][y_inverted].children[0] = GRAY
@@ -317,13 +323,11 @@ class SimulationWidget(Widget):
                         if food_level > 0:
                             has_food = True
                             if player_index == 0:
-                                self.cells[x][y_inverted].children[0] = RED
+                                self.cells[x][y_inverted].children[0].rgba = [1, 0, 0, food_level / 255]
                             elif player_index == 1:
-                                self.cells[x][y_inverted].children[0] = GREEN, BLUE
+                                self.cells[x][y_inverted].children[0].rgba = [0, 1, 0, food_level / 255]
                             else:
-                                self.cells[x][y_inverted].children[0] = BLUE
-
-                            self.cells[x][y_inverted].children[0].a = food_level / 255
+                                self.cells[x][y_inverted].children[0].rgba = [0, 0, 1, food_level / 255]
 
                     if not has_food:
                         if SHOW_HOME_PHEROMONES and home_pheromone_level > 0:
@@ -331,7 +335,7 @@ class SimulationWidget(Widget):
 
                         if SHOW_FOOD_PHEROMONES and food_pheromone_level > 0:
                             self.cells[x][y_inverted].children[0].rgba = [0, 1, 0, food_pheromone_level / 255]
-        
+
 class EndWidget(Widget):
     title = ObjectProperty(None)
 
@@ -462,8 +466,8 @@ class AntificialApp(App):
         INTS_PER_FIELD = 4 + player_count
         SCORES = [0 for i in range(player_count)]
         PLAYER_COUNT = player_count
-        
-        
+
+
     def build(self):
         splash_widget = SplashWidget()
         start_widget = StartWidget()
