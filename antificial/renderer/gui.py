@@ -4,12 +4,11 @@ import util
 import time, math, os, datetime
 from random import randint
 
-PROJECTOR_MODE = False
+PROJECTOR_MODE = True
 
 from kivy.config import Config
 Config.set("kivy", "log_level", "warning") # one of: trace, debug, info, warning, error, critical
 if PROJECTOR_MODE:
-    print("lol")
     Config.set("graphics", "fullscreen", "fake") # can be 0, 1 or 'auto'
     Config.set("graphics", "borderless", 1) # can be 0 or 1
     Config.set("graphics", "width", 1920) # can be 0 or 1
@@ -268,6 +267,7 @@ class SimulationWidget(Widget):
             self.p2_score_label.text = ""
 
     def update(self, dt):
+        global BLACK, WHITE, RED, GREEN, BLUE, GRAY
         with self.canvas:
             x, y = Window.size
             self.spacing_x = x / WIDTH
@@ -301,14 +301,15 @@ class SimulationWidget(Widget):
                 ant_count = WORLD_DATA[i + 1]
                 home_pheromone_level = WORLD_DATA[i + 2]
                 food_pheromone_level = WORLD_DATA[i + 3]
+                
 
                 #self.cells[x][y_inverted].children[0] = Color(1, 1, 1, 1) # white
-                self.cells[x][y_inverted].children[0] = Color(0, 0, 0, 1) # black
+                self.cells[x][y_inverted].children[0] = BLACK # black
 
                 if is_nest:
-                    self.cells[x][y_inverted].children[0] = Color(0.5, 0.5, 0.5)
+                    self.cells[x][y_inverted].children[0] = GRAY
                 elif ant_count > 0:
-                    self.cells[x][y_inverted].children[0] = Color(1, 1, 1)
+                    self.cells[x][y_inverted].children[0] = WHITE
                 else:
                     has_food = False
                     for player_index in range(PLAYER_COUNT):
@@ -316,21 +317,21 @@ class SimulationWidget(Widget):
                         if food_level > 0:
                             has_food = True
                             if player_index == 0:
-                                self.cells[x][y_inverted].children[0] = Color(0.5, 0, 0)
+                                self.cells[x][y_inverted].children[0] = RED
                             elif player_index == 1:
-                                self.cells[x][y_inverted].children[0] = Color(0, 0.5, 0), Color(0, 0, 0.5)
+                                self.cells[x][y_inverted].children[0] = GREEN, BLUE
                             else:
-                                self.cells[x][y_inverted].children[0] = Color(0, 0, 0.5)
+                                self.cells[x][y_inverted].children[0] = BLUE
 
                             self.cells[x][y_inverted].children[0].a = food_level / 255
 
                     if not has_food:
                         if SHOW_HOME_PHEROMONES and home_pheromone_level > 0:
-                            self.cells[x][y_inverted].children[0] = Color(0, 0, 1, home_pheromone_level / 255)
+                            self.cells[x][y_inverted].children[0].rgba = [0, 0, 1, home_pheromone_level / 255]
 
                         if SHOW_FOOD_PHEROMONES and food_pheromone_level > 0:
-                            self.cells[x][y_inverted].children[0] = Color(0, 1, 0, food_pheromone_level / 255)
-
+                            self.cells[x][y_inverted].children[0].rgba = [0, 1, 0, food_pheromone_level / 255]
+        
 class EndWidget(Widget):
     title = ObjectProperty(None)
 
@@ -424,6 +425,14 @@ class MenuScreen(Screen):
 SHOW_HOME_PHEROMONES = True
 SHOW_FOOD_PHEROMONES = True
 
+
+WHITE = Color(1, 1, 1, 1)
+BLACK = Color(0, 0, 0, 1)
+RED = Color(1, 0, 0, 1)
+BLUE = Color(0, 0, 1, 1)
+GREEN = Color(0, 1, 0, 1)
+GRAY = Color(0.5, 0.5, 0.5)
+
 CURRENT_SCREEN = 0
 GAME_BEGIN = 0
 GAME_RUNNING = 1
@@ -441,8 +450,8 @@ DEBUG = True
 
 class AntificialApp(App):
     def __init__(self, fw_output, ir_cc_queue, fw_cc_queue, world_data, grid_resolution, player_count, grid_size):
+        global FW_OUTPUT, IR_CC_QUEUE, FW_CC_QUEUE, WORLD_DATA, WIDTH, HEIGHT, GRID_SIZE, INTS_PER_FIELD, SCORES, PLAYER_COUNT, PROJECTOR_MODE
         super(AntificialApp, self).__init__()
-        global FW_OUTPUT, IR_CC_QUEUE, FW_CC_QUEUE, WORLD_DATA, WIDTH, HEIGHT, GRID_SIZE, INTS_PER_FIELD, SCORES, PLAYER_COUNT
         FW_OUTPUT = fw_output
         IR_CC_QUEUE = ir_cc_queue
         FW_CC_QUEUE = fw_cc_queue
@@ -453,7 +462,8 @@ class AntificialApp(App):
         INTS_PER_FIELD = 4 + player_count
         SCORES = [0 for i in range(player_count)]
         PLAYER_COUNT = player_count
-
+        
+        
     def build(self):
         splash_widget = SplashWidget()
         start_widget = StartWidget()
