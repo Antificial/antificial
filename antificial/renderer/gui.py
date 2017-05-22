@@ -141,13 +141,16 @@ Builder.load_string("""
         text: "Game Finished"
 
 <MenuWidget>:
-    dbg: dbg_label
     btn_quit: btn_quit
     tick_slider: tick_slider
-    BoxLayout:
-        orientation: "horizontal"
+    home_trail_slider: home_trail_slider
+    food_trail_slider: food_trail_slider
+    GridLayout:
+        cols: 1
+        rows: 3
         spacing: 10
-        size: root.width, root.height
+        size: root.width / 2, root.height / 2
+        pos: 0, root.height / 2
         GridLayout:
             cols: 1
             rows: 2
@@ -169,16 +172,48 @@ Builder.load_string("""
                 step: 1
                 value: 10
                 value_track: True
-        BoxLayout:
+        GridLayout:
+            cols: 1
+            rows: 2
             spacing: 10
             padding: 10
-            Label:
-                id: dbg_label
-                font_size: 70
-                size: self.texture_size
-                center_x: root.width / 2
-                top: root.top - 150
-                text: "0"
+            row_default_height: 80
+            row_force_default: True
+            BoxLayout:
+                Label:
+                    font_size: 48
+                    text: "Home Trail Decay"
+                Label:
+                    font_size: 48
+                    text:  str(int(home_trail_slider.value))
+            Slider:
+                id: home_trail_slider
+                min: 0
+                max: 100
+                step: 1
+                value: 4
+                value_track: True
+        GridLayout:
+            cols: 1
+            rows: 2
+            spacing: 10
+            padding: 10
+            row_default_height: 80
+            row_force_default: True
+            BoxLayout:
+                Label:
+                    font_size: 48
+                    text: "Food Trail Decay"
+                Label:
+                    font_size: 48
+                    text:  str(int(food_trail_slider.value))
+            Slider:
+                id: food_trail_slider
+                min: 0
+                max: 100
+                step: 1
+                value: 4
+                value_track: True
     BoxLayout:
         orientation: "horizontal"
         spacing: 10
@@ -352,6 +387,8 @@ class EndWidget(Widget):
 class MenuWidget(Widget):
     btn_quit = ObjectProperty(None)
     tick_slider = ObjectProperty(None)
+    home_trail_slider = ObjectProperty(None)
+    food_trail_slider = ObjectProperty(None)
     btn_count = NumericProperty(1)
 
     def __init__(self, **kwargs):
@@ -359,9 +396,17 @@ class MenuWidget(Widget):
         self.btn_quit.on_press = self.quit
         self.btn_count = len([widget for widget in self.walk(restrict=True) if type(widget) is Button])
         self.tick_slider.bind(value=self.on_tick_slider_change)
+        self.home_trail_slider.bind(value=self.on_home_trail_slider_change)
+        self.food_trail_slider.bind(value=self.on_food_trail_slider_change)
 
     def on_tick_slider_change(self, instance, value):
         FW_CC_QUEUE.put("[IPS] %d" % value)
+
+    def on_home_trail_slider_change(self, instance, value):
+        FW_CC_QUEUE.put("[HTD] %d" % value)
+
+    def on_food_trail_slider_change(self, instance, value):
+        FW_CC_QUEUE.put("[FTD] %d" % value)
 
     def quit(self):
         IR_CC_QUEUE.put("[CMD] done")

@@ -34,7 +34,7 @@ def shutdown():
     print("[FW] Shutting down...")
 
 def handle_action(s):
-    global IPS
+    global IPS, DECAY_RATE_HOME, DECAY_RATE_FOOD
     if s.startswith("[CMD]"):
         cmd = s[6:]
         if cmd == "done":
@@ -43,6 +43,12 @@ def handle_action(s):
             RUNNING = False
     elif s.startswith("[IPS]"):
         IPS = int(s[6:])
+    elif s.startswith("[HTD]"):
+        DECAY_RATE_HOME = int(s[6:])
+        print(DECAY_RATE_HOME)
+    elif s.startswith("[FTD]"):
+        DECAY_RATE_FOOD = int(s[6:])
+        print(DECAY_RATE_FOOD)
 
 def handle_commands():
     try:

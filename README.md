@@ -31,6 +31,7 @@ $ python main.py
 
 ### Credit
 * Antificial Logo - Dave Keller [[Website]](http://www.davedesignsstuff.com) / [[Dribble]](https://dribbble.com/dabious)
+* Inspiration - Alex Belezjaks [[Website]](http://alexbelezjaks.com/works/ant-colony-simulation)
 
 ## License
 * see [LICENSE](https://github.com/Antificial/antificial/blob/master/LICENSE) file
