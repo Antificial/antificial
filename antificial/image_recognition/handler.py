@@ -205,7 +205,7 @@ def work():
     FPSCounter = 0
     stableBoundariesC = 0
     ballCenters = []
-    stream = getVideoFeed(1)
+    stream = getVideoFeed()
     startSignalSend = False
     maxC = [60,155,255] 
     minC = [43,112,184]
