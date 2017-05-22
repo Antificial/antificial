@@ -190,7 +190,7 @@ Builder.load_string("""
             Slider:
                 id: game_duration_slider
                 min: 5
-                max: 3600
+                max: 1200
                 step: 1
                 value: 180
                 value_track: True
@@ -321,7 +321,7 @@ class SimulationWidget(Widget):
             self.fps.text = "%d FPS : RES: (%d, %d)" % (round(Clock.get_fps()), x, y)
             if GAME_STATE == GAME_RUNNING:
                 TIME += 1
-                seconds_to_display = (GAME_DURATION + 1) - TIME
+                seconds_to_display = GAME_DURATION - TIME
                 if seconds_to_display < 0:
                     seconds_to_display = 0
 
@@ -528,7 +528,7 @@ GAME_RUNNING = 1
 GAME_END = 2
 GAME_STOP = 3
 GAME_STATE = GAME_BEGIN
-GAME_DURATION = 0
+GAME_DURATION = handler.GAME_DURATION
 TIME = 0
 SCORES = []
 ROOT_PATH = os.path.dirname(__file__)
@@ -552,7 +552,6 @@ class AntificialApp(App):
         INTS_PER_FIELD = 4 + player_count
         SCORES = [0 for i in range(player_count)]
         PLAYER_COUNT = player_count
-        GAME_DURATION = handler.GAME_DURATION
 
 
     def build(self):
