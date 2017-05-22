@@ -7,8 +7,9 @@ import time
 
 # Management Constants
 RUNNING = True
-TIMEOUT = 1
+TIMEOUT = 0
 IPS = 10
+ANT_COUNT = 200
 # Game State
 GAME_BEGIN = 0
 GAME_RUNNING = 1
@@ -31,6 +32,7 @@ def shutdown():
     print("[FW] Shutting down...")
 
 def handle_action(s):
+    global IPS
     if s.startswith("[CMD]"):
         cmd = s[6:]
         if cmd == "done":
@@ -50,22 +52,13 @@ def handle_commands():
 def handle_pipe():
     if IR_OUTPUT.poll(TIMEOUT):
         input = IR_OUTPUT.recv()
-        util.iprint("[FW] Received {input}!")
-        util.iprint("[FW] Sending {input} to RR...")
         if isinstance(input, list):
             global WORLD
             WORLD.update_food(input)
          
         if isinstance(input, str):
             if input.startswith("[KEY]"):
-                FW_CC_QUEUE.put(input)        
-                
-        # get field
-        # change food
-        # world set 
-        # probably handle ball events here
-        # analyse coordinate data and determine players
-        # purge previous list of players and re-do
+                FW_CC_QUEUE.put(input)
 
 def poll_for_keypress(keycode):
     try:
@@ -81,16 +74,17 @@ def poll_for_keypress(keycode):
     return False
 
 def game_loop():
+    global IPS
     t = time.time()
     finish_time = time.time() + GAME_DURATION
-    wait_time = 1 / IPS
     while t < finish_time and RUNNING:
+        wait_time = 1 / IPS
         t = time.time()
         start = time.perf_counter()
         handle_commands()
         handle_pipe() # update balls
         COLONY.update() # move ants
-        # WORLD.decay_pheromone() # update pheromones
+        WORLD.decay_pheromones(8, 8) # update pheromones
         end = time.perf_counter()
         proc_time = end - start
         sleep_time = wait_time - proc_time if proc_time < wait_time else 0
@@ -100,7 +94,7 @@ def app_loop():
     global COLONY, GAMERULES, GAME_STATE
     while RUNNING:
         handle_commands()
-        COLONY = col.Colony(WORLD, HOME)
+        COLONY = col.Colony(WORLD, HOME, ANT_COUNT)
         GAMERULES = game.GameRules(COLONY)
         COLONY.init_gamerules(GAMERULES)
         handle_pipe()

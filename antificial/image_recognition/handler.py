@@ -20,7 +20,6 @@ YMIN = 28.5
 YMAX = 514.5
 SHOW_DEBUG_WINDOWS = True
 
-
 class Settings(object):
     DP = 3
     MinDistance = 22
@@ -178,8 +177,6 @@ def convertToGameWorldCoordinates(ballPositions):
                gameCoordinates.append((currentX, currentY, 0))
 
    return gameCoordinates
-        
-        
 
 def init():
     global SETTINGS, SHOW_DEBUG_WINDOWS
@@ -208,7 +205,7 @@ def work():
     FPSCounter = 0
     stableBoundariesC = 0
     ballCenters = []
-    stream = getVideoFeed()
+    stream = getVideoFeed(0)
 
     while RUNNING:
         handle_commands()

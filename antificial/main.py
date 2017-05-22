@@ -16,12 +16,6 @@ def init():
     ir_input, ir_output = Pipe() # For IPC
     fw_input, fw_output = Pipe() # Likewise
     world = fw.World(GRID_RESOLUTION, PLAYER_COUNT)
-    for x in range(20):
-        for y in range(20):
-            f = world.get(randint(0, GRID_RESOLUTION[0]-1), randint(0, GRID_RESOLUTION[1]-1))
-            f.ant_count = 100
-            f.home_pheromone_level = 100
-            world.set(f)
     irp = Process(target=ir.run, args=(ir_cc_queue, ir_input, GRID_RESOLUTION))
     fwp = Process(target=fw.run, args=(ir_cc_queue, fw_cc_queue, ir_output, fw_input, world, HOME))
     return irp, fwp, ir_cc_queue, fw_cc_queue, fw_output, world
