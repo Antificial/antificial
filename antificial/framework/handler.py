@@ -9,14 +9,16 @@ import time
 RUNNING = True
 TIMEOUT = 0
 IPS = 10
-ANT_COUNT = 200
+ANT_COUNT = 50
+DECAY_RATE_HOME = 4
+DECAY_RATE_FOOD = 4
 # Game State
 GAME_BEGIN = 0
 GAME_RUNNING = 1
 GAME_END = 2
 GAME_STOP = 3
 GAME_STATE = GAME_BEGIN
-GAME_DURATION = 40 # in seconds
+GAME_DURATION = 180 # in seconds
 # Game Data
 COLONY = None
 GAMERULES = None
@@ -48,7 +50,7 @@ def handle_commands():
         handle_action(input)
     except:
         pass
-           
+
 def handle_pipe():
     if IR_OUTPUT.poll(TIMEOUT):
         input = IR_OUTPUT.recv()
@@ -86,7 +88,7 @@ def game_loop():
         handle_commands()
         handle_pipe() # update balls
         COLONY.update() # move ants
-        WORLD.decay_pheromones(8, 8) # update pheromones
+        WORLD.decay_pheromones(DECAY_RATE_HOME, DECAY_RATE_FOOD) # update pheromones
         end = time.perf_counter()
         proc_time = end - start
         sleep_time = wait_time - proc_time if proc_time < wait_time else 0
