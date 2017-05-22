@@ -194,8 +194,8 @@ def init():
 
 def getVideoFeed(src=0):
     stream = cv2.VideoCapture(src)
-    #stream.set(3, 1280)
-    #stream.set(4, 720)
+    stream.set(3, 1280)
+    stream.set(4, 720)
     return stream
 
 def add_debug_ball(coordinates, x, y, player):
@@ -220,8 +220,11 @@ def work():
     ballCenters = []
     stream = getVideoFeed()
     startSignalSend = False
-    maxC = [60,155,255]
-    minC = [43,112,184]
+    maxC = np.array([87,109,119])
+    minC = np.array([0,23,25])
+    
+    #maxC = np.array([255,109,116])
+    #minC = np.array([39,52,53])
 
     while RUNNING:
         handle_commands()
@@ -274,8 +277,8 @@ def work():
             s1g = cv2.GaussianBlur(s1g, (13,13), 0)
             s2g = cv2.GaussianBlur(s2g, (13,13), 0)
 
-            thres1 = cv2.adaptiveThreshold(s1g, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
-            thres2 = cv2.adaptiveThreshold(s2g, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
+            thres1 = cv2.adaptiveThreshold(s1g, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 17, 2)
+            thres2 = cv2.adaptiveThreshold(s2g, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 17, 2)
 
             #_, thres1 = cv2.threshold(s1g, 60, 255, cv2.THRESH_BINARY_INV)
             #_, thres2 = cv2.threshold(s2g, 60, 255, cv2.THRESH_BINARY_INV)
@@ -305,6 +308,7 @@ def work():
                             if len(defects) == numDefects:
                                 print("Virtual spacebar")
                                 IR_INPUT.send("[KEY] 32") # Virtual spacebar
+                                time.sleep(5)
                                 startSignalSend = True
 
                 if len(s2Contours) > 0:
@@ -317,6 +321,7 @@ def work():
                             if len(defects) == numDefects:
                                 print("Virtual spacebar")
                                 IR_INPUT.send("[KEY] 32") # Virtual spacebar
+                                time.sleep(5)
                                 startSignalSend = True
 
 
@@ -343,7 +348,7 @@ def work():
             mask = cv2.inRange(gameBoardROI, minC, maxC)
             colorRange = cv2.bitwise_and(gameBoardROI, gameBoardROI, mask = mask)
 
-            gameBoardROIGray = cv2.cvtColor(gameBoardROI, cv2.COLOR_BGR2GRAY)
+            gameBoardROIGray = cv2.cvtColor(colorRange, cv2.COLOR_BGR2GRAY)
             gameBoardROIGray = cv2.GaussianBlur(gameBoardROIGray, (3,3),4)
             gameBoardROIGray = cv2.erode(gameBoardROIGray, (20,20))
             gameBoardROIGray = cv2.dilate(gameBoardROIGray, (20,20))
