@@ -4,14 +4,25 @@ import util
 import time, math, os, datetime
 from random import randint
 
+PROJECTOR_MODE = False
+
 from kivy.config import Config
-Config.set("graphics", "fullscreen", "fake") # can be 0, 1 or 'auto'
-Config.set("graphics", "borderless", 1) # can be 0 or 1
-Config.set("graphics", "height", 1080) # can be 0 or 1
-Config.set("graphics", "width", 1920) # can be 0 or 1
-Config.set("graphics", "resizable", 0) # can be 0 or 1
-Config.set("graphics", "maxfps", 30) # speaks for itself, i guess
 Config.set("kivy", "log_level", "warning") # one of: trace, debug, info, warning, error, critical
+if PROJECTOR_MODE:
+    print("lol")
+    Config.set("graphics", "fullscreen", "fake") # can be 0, 1 or 'auto'
+    Config.set("graphics", "borderless", 1) # can be 0 or 1
+    Config.set("graphics", "width", 1920) # can be 0 or 1
+    Config.set("graphics", "height", 1080) # can be 0 or 1
+    Config.set("graphics", "resizable", 0) # can be 0 or 1
+    Config.set("graphics", "maxfps", 30) # speaks for itself, i guess
+else:
+    Config.set("graphics", "fullscreen", 0) # can be 0, 1 or 'auto'
+    Config.set("graphics", "borderless", 0) # can be 0 or 1
+    Config.set("graphics", "width", 800) # can be 0 or 1
+    Config.set("graphics", "height", 600) # can be 0 or 1
+    Config.set("graphics", "resizable", 1) # can be 0 or 1
+    Config.set("graphics", "maxfps", 30) # speaks for itself, i guess
 from kivy.app import App
 from kivy.lang import Builder
 from kivy.uix.screenmanager import ScreenManager, Screen, FadeTransition, SlideTransition, RiseInTransition
@@ -463,8 +474,8 @@ class AntificialApp(App):
         sm.bind(on_close=self._on_close)
         Window.bind(on_close=self._on_close)
 
-        # projector mode:
-        #Window.left = +1920
+        if PROJECTOR_MODE:
+            Window.left = 1920
         return sm
 
     def _on_close(self, *largs):
