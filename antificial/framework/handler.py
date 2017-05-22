@@ -34,7 +34,7 @@ def shutdown():
     print("[FW] Shutting down...")
 
 def handle_action(s):
-    global IPS, DECAY_RATE_HOME, DECAY_RATE_FOOD
+    global IPS, DECAY_RATE_HOME, DECAY_RATE_FOOD, GAME_DURATION
     if s.startswith("[CMD]"):
         cmd = s[6:]
         if cmd == "done":
@@ -49,6 +49,9 @@ def handle_action(s):
     elif s.startswith("[FTD]"):
         DECAY_RATE_FOOD = int(s[6:])
         print(DECAY_RATE_FOOD)
+    elif s.startswith("[GDU]"):
+        GAME_DURATION = int(s[6:])
+        print(GAME_DURATION)
 
 def handle_commands():
     try:
@@ -65,7 +68,7 @@ def handle_pipe():
         if isinstance(input, list):
             global WORLD
             WORLD.update_food(input)
-         
+
         if isinstance(input, str):
             if input.startswith("[KEY]"):
                 FW_CC_QUEUE.put(input)
@@ -84,10 +87,12 @@ def poll_for_keypress(keycode):
     return False
 
 def game_loop():
-    global IPS
+    global IPS, GAME_DURATION
+    start_time = time.time()
     t = time.time()
-    finish_time = time.time() + GAME_DURATION
+    finish_time = start_time + GAME_DURATION
     while t < finish_time and RUNNING:
+        finish_time = start_time + GAME_DURATION
         wait_time = 1 / IPS
         t = time.time()
         start = time.perf_counter()

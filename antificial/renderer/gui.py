@@ -143,11 +143,12 @@ Builder.load_string("""
 <MenuWidget>:
     btn_quit: btn_quit
     tick_slider: tick_slider
+    game_duration_slider: game_duration_slider
     home_trail_slider: home_trail_slider
     food_trail_slider: food_trail_slider
     GridLayout:
         cols: 1
-        rows: 3
+        rows: 4
         spacing: 10
         size: root.width / 2, root.height / 2
         pos: 0, root.height / 2
@@ -171,6 +172,27 @@ Builder.load_string("""
                 max: 20
                 step: 1
                 value: 10
+                value_track: True
+        GridLayout:
+            cols: 1
+            rows: 2
+            spacing: 10
+            padding: 10
+            row_default_height: 80
+            row_force_default: True
+            BoxLayout:
+                Label:
+                    font_size: 48
+                    text: "Game Duration"
+                Label:
+                    font_size: 48
+                    text:  str(int(game_duration_slider.value))
+            Slider:
+                id: game_duration_slider
+                min: 5
+                max: 3600
+                step: 1
+                value: 180
                 value_track: True
         GridLayout:
             cols: 1
@@ -293,13 +315,17 @@ class SimulationWidget(Widget):
             self.cells[x][y_inverted] = g
 
     def update_data(self, dt):
-        global DEBUG, TIME, SCORE
+        global DEBUG, TIME, SCORE, GAME_DURATION
         x, y = Window.size
         if DEBUG:
             self.fps.text = "%d FPS : RES: (%d, %d)" % (round(Clock.get_fps()), x, y)
             if GAME_STATE == GAME_RUNNING:
                 TIME += 1
-                display_time = str(datetime.timedelta(seconds=((handler.GAME_DURATION + 1) - TIME)))
+                seconds_to_display = (GAME_DURATION + 1) - TIME
+                if seconds_to_display < 0:
+                    seconds_to_display = 0
+
+                display_time = str(datetime.timedelta(seconds=seconds_to_display))
                 self.p1_time_label.text = display_time
                 self.p1_score_label.text = "Score: %03d" % SCORES[0]
                 self.p2_time_label.text = display_time
@@ -387,6 +413,7 @@ class EndWidget(Widget):
 class MenuWidget(Widget):
     btn_quit = ObjectProperty(None)
     tick_slider = ObjectProperty(None)
+    game_duration_slider = ObjectProperty(None)
     home_trail_slider = ObjectProperty(None)
     food_trail_slider = ObjectProperty(None)
     btn_count = NumericProperty(1)
@@ -396,11 +423,17 @@ class MenuWidget(Widget):
         self.btn_quit.on_press = self.quit
         self.btn_count = len([widget for widget in self.walk(restrict=True) if type(widget) is Button])
         self.tick_slider.bind(value=self.on_tick_slider_change)
+        self.game_duration_slider.bind(value=self.on_game_duration_slider_change)
         self.home_trail_slider.bind(value=self.on_home_trail_slider_change)
         self.food_trail_slider.bind(value=self.on_food_trail_slider_change)
 
     def on_tick_slider_change(self, instance, value):
         FW_CC_QUEUE.put("[IPS] %d" % value)
+
+    def on_game_duration_slider_change(self, instance, value):
+        global GAME_DURATION
+        GAME_DURATION = value
+        FW_CC_QUEUE.put("[GDU] %d" % value)
 
     def on_home_trail_slider_change(self, instance, value):
         FW_CC_QUEUE.put("[HTD] %d" % value)
@@ -495,6 +528,7 @@ GAME_RUNNING = 1
 GAME_END = 2
 GAME_STOP = 3
 GAME_STATE = GAME_BEGIN
+GAME_DURATION = 0
 TIME = 0
 SCORES = []
 ROOT_PATH = os.path.dirname(__file__)
@@ -518,6 +552,7 @@ class AntificialApp(App):
         INTS_PER_FIELD = 4 + player_count
         SCORES = [0 for i in range(player_count)]
         PLAYER_COUNT = player_count
+        GAME_DURATION = handler.GAME_DURATION
 
 
     def build(self):

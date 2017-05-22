@@ -19,6 +19,7 @@ XMAX = 934.5
 YMIN = 28.5
 YMAX = 514.5
 SHOW_DEBUG_WINDOWS = True
+DEBUG_BALLS_ONLY = False
 
 class Settings(object):
     DP = 3
@@ -58,7 +59,7 @@ def handle_action(s):
         cmd = s[6:]
         if cmd == "done":
             print("[IR] Quitting")
-            global RUNNING  
+            global RUNNING
             RUNNING = False
     elif s.startswith("[GAME_STATE]"):
         global GAME_STATE
@@ -149,7 +150,7 @@ def processData(ballCenters):
         sumList += validPos[i]
     ballPositions = sumList/amountValidBalls
     return ballPositions
-    
+
 def convertToGameWorldCoordinates(ballPositions):
    global GRID_RESOLUTION, XMAX, XMIN, YMIN, YMAX
    grid_width = GRID_RESOLUTION[0]
@@ -197,6 +198,18 @@ def getVideoFeed(src=0):
     #stream.set(4, 720)
     return stream
 
+def add_debug_ball(coordinates, x, y, player):
+    coordinates.append([x - 1, y - 1, player])
+    coordinates.append([x    , y - 1, player])
+    coordinates.append([x + 1, y - 1, player])
+    coordinates.append([x - 1, y    , player])
+    coordinates.append([x    , y    , player])
+    coordinates.append([x + 1, y    , player])
+    coordinates.append([x - 1, y + 1, player])
+    coordinates.append([x    , y + 1, player])
+    coordinates.append([x + 1, y + 1, player])
+    return coordinates
+
 def work():
     isResizing = True
     m = False
@@ -207,12 +220,22 @@ def work():
     ballCenters = []
     stream = getVideoFeed()
     startSignalSend = False
-    maxC = [60,155,255] 
+    maxC = [60,155,255]
     minC = [43,112,184]
 
     while RUNNING:
         handle_commands()
         begin = time.time()
+
+        if DEBUG_BALLS_ONLY:
+            debug_ball_coordinates = []
+            debug_ball_coordinates = add_debug_ball(debug_ball_coordinates, 30, 30, 0)
+            debug_ball_coordinates = add_debug_ball(debug_ball_coordinates, 90, 10, 0)
+            debug_ball_coordinates = add_debug_ball(debug_ball_coordinates, 100, 60, 0)
+            IR_INPUT.send(debug_ball_coordinates)
+            cv2.destroyAllWindows()
+            stream.release()
+            return
 
         if not stream.isOpened():
             print("No camera detected! Retrying in 5 seconds...")
@@ -235,7 +258,7 @@ def work():
                     print("Failed to establish boundary! Retrying in 5 seconds...")
                     time.sleep(5.0)
                     continue
-                 
+
                 if stableBoundariesC == 20:
                     isResizing = False
                 stableBoundariesC += 1
@@ -246,35 +269,35 @@ def work():
             startROI2 = gameBoardROI[380:520, 360:600]
             s1g = cv2.cvtColor(startROI1, cv2.COLOR_BGR2GRAY)
             s2g = cv2.cvtColor(startROI2, cv2.COLOR_BGR2GRAY)
-            
+
 
             s1g = cv2.GaussianBlur(s1g, (13,13), 0)
             s2g = cv2.GaussianBlur(s2g, (13,13), 0)
-            
+
             thres1 = cv2.adaptiveThreshold(s1g, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
             thres2 = cv2.adaptiveThreshold(s2g, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
-            
+
             #_, thres1 = cv2.threshold(s1g, 60, 255, cv2.THRESH_BINARY_INV)
             #_, thres2 = cv2.threshold(s2g, 60, 255, cv2.THRESH_BINARY_INV)
-            
-            
+
+
             _, s1Contours,_ = cv2.findContours(thres1.copy(),cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
             _, s2Contours,_ = cv2.findContours(thres2.copy(),cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-            
+
             s1Contours = sorted(s1Contours, key = cv2.contourArea, reverse = True)[:1]
             s2Contours = sorted(s2Contours, key = cv2.contourArea, reverse = True)[:1]
-            
+
             cv2.drawContours(startROI1, s1Contours, -1, (0,0,255))
             cv2.drawContours(startROI2, s2Contours, -1, (0,0,255))
-            
+
 
             numDefects = 6
-            
+
             if not startSignalSend:
                 if len(s1Contours) > 0:
                     hull = cv2.convexHull(s1Contours[0], returnPoints = False)
                     hulld = cv2.convexHull(s1Contours[0], returnPoints = True)
-                    
+
                     if len(hull) > 0:
                         cv2.drawContours(startROI1, [hulld], 0, (0,255,0))
                         defects = cv2.convexityDefects(s1Contours[0],hull)
@@ -283,7 +306,7 @@ def work():
                                 print("Virtual spacebar")
                                 IR_INPUT.send("[KEY] 32") # Virtual spacebar
                                 startSignalSend = True
-                
+
                 if len(s2Contours) > 0:
                     hull = cv2.convexHull(s2Contours[0], returnPoints = False)
                     hulld = cv2.convexHull(s2Contours[0], returnPoints = True)
@@ -295,8 +318,8 @@ def work():
                                 print("Virtual spacebar")
                                 IR_INPUT.send("[KEY] 32") # Virtual spacebar
                                 startSignalSend = True
-            
-                
+
+
             if SHOW_DEBUG_WINDOWS:
                 cv2.imshow("startROI1", s1g)
                 cv2.imshow("startROI2", s2g)
@@ -316,10 +339,10 @@ def work():
             if not isResizing:
                 gameBoardROI = cv2.warpPerspective(original,m,(960,540))
 
-                
+
             mask = cv2.inRange(gameBoardROI, minC, maxC)
             colorRange = cv2.bitwise_and(gameBoardROI, gameBoardROI, mask = mask)
-                
+
             gameBoardROIGray = cv2.cvtColor(gameBoardROI, cv2.COLOR_BGR2GRAY)
             gameBoardROIGray = cv2.GaussianBlur(gameBoardROIGray, (3,3),4)
             gameBoardROIGray = cv2.erode(gameBoardROIGray, (20,20))
@@ -347,7 +370,7 @@ def work():
                 cv2.imshow("gameBoardROI", gameBoardROI)
                 cv2.imshow("gameBoardROIGray", gameBoardROIGray)
                 cv2.imshow("colorRange", colorRange)
-                
+
 
             if FPSCounter == FPS-1:
                 if len(ballCenters) > 0:
