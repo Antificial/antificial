@@ -242,7 +242,7 @@ class World:
 
         return True
 
-    def decay_pheromones(self, home_pheromone_decay_rate, food_pheromone_decay_rate):
+    def decay_pheromones(self, home_pheromone_decay_rate = 8, food_pheromone_decay_rate = 8):
         if home_pheromone_decay_rate < 0:
             return False
 
@@ -317,6 +317,10 @@ class World:
             begin_index = self.get_field_begin_index(x, y)
             food_index = self.player_food_indexes[player_no]
             self.data[begin_index + food_index] = 255
+
+    def set_home(self, x, y):
+        begin_index = self.get_field_begin_index(x, y)
+        self.data[begin_index + self.nest_index] = 1
 
     def get_field_begin_index(self, x, y):
         if not self.is_valid_coordinate(x, y):
