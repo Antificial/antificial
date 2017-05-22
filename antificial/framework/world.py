@@ -227,10 +227,16 @@ class World:
 
         if pheromone_type == PheromoneType.HOME:
             current_level = self.data[begin_index + self.home_pheromone_index]
-            self.data[begin_index + self.home_pheromone_index] = current_level + pheromone_strength
+            new_level = current_level + pheromone_strength
+            if new_level > 255:
+                new_level = 255
+            self.data[begin_index + self.home_pheromone_index] = new_level
         elif pheromone_type == PheromoneType.FOOD:
             current_level = self.data[begin_index + self.food_pheromone_index]
-            self.data[begin_index + self.food_pheromone_index] = current_level + pheromone_strength
+            new_level = current_level + pheromone_strength
+            if new_level > 255:
+                new_level = 255
+            self.data[begin_index + self.food_pheromone_index] = new_level
         else:
             return False
 

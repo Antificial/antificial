@@ -3,6 +3,7 @@
 import util
 import time, math, os, datetime
 from random import randint
+from framework import handler
 
 PROJECTOR_MODE = False
 
@@ -261,7 +262,7 @@ class SimulationWidget(Widget):
             self.fps.text = "%d FPS : RES: (%d, %d)" % (round(Clock.get_fps()), x, y)
             if GAME_STATE == GAME_RUNNING:
                 TIME += 1
-                display_time = str(datetime.timedelta(seconds=TIME))
+                display_time = str(datetime.timedelta(seconds=((handler.GAME_DURATION + 1) - TIME)))
                 self.p1_time_label.text = display_time
                 self.p1_score_label.text = "Score: %03d" % SCORES[0]
                 self.p2_time_label.text = display_time
