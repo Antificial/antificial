@@ -8,10 +8,10 @@ import time
 # Management Constants
 RUNNING = True
 TIMEOUT = 0
-IPS = 10
+IPS = 15
 ANT_COUNT = 50
-DECAY_RATE_HOME = 4
-DECAY_RATE_FOOD = 4
+DECAY_RATE_HOME = 1
+DECAY_RATE_FOOD = 3
 # Game State
 GAME_BEGIN = 0
 GAME_RUNNING = 1
@@ -34,7 +34,7 @@ def shutdown():
     print("[FW] Shutting down...")
 
 def handle_action(s):
-    global IPS, DECAY_RATE_HOME, DECAY_RATE_FOOD, GAME_DURATION, ANT_COUNT
+    global IPS, DECAY_RATE_HOME, DECAY_RATE_FOOD, GAME_DURATION, ANT_COUNT, GAME_STATE
     if s.startswith("[CMD]"):
         cmd = s[6:]
         if cmd == "done":
@@ -51,6 +51,10 @@ def handle_action(s):
         GAME_DURATION = int(s[6:])
     elif s.startswith("[IAC]"):
         ANT_COUNT = int(s[6:])
+    elif s.startswith("[KEY]"):
+        key = int(s[6:])
+        if key == 114:
+            GAME_STATE = GAME_END
 
 def handle_commands():
     try:
@@ -91,7 +95,7 @@ def game_loop():
     finish_time = start_time + GAME_DURATION
     start_IPS = IPS
     scope_IPS = IPS
-    while t < finish_time and RUNNING:
+    while t < finish_time and RUNNING and GAME_STATE == GAME_RUNNING:
         if IPS != start_IPS:
             scope_IPS = IPS
             start_IPS = IPS

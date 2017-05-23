@@ -1,7 +1,15 @@
 from enum import IntEnum
 import abc
 import operator
+import math
 from random import getrandbits, randint
+
+SEARCH_HOME_RANDOM_FACTOR = 2
+SEARCH_FOOD_RANDOM_FACTOR = 2
+HOME_DISTANCE_FACTOR = 2.0
+
+def distance(x1, y1, x2, y2):
+    return math.sqrt((x2-x1)**2+(y2-y1)**2)
 
 class Orientation(IntEnum):
     NORTH = 0
@@ -192,7 +200,7 @@ class SearchFoodState(AntState):
 
         # exclude borders and obstacles
         neighbours = [x for x in neighbours if x != None]
-
+        '''
         best_pheromone = None
         for field in neighbours:
             if field.food_pheromone_level > 0:
@@ -204,8 +212,17 @@ class SearchFoodState(AntState):
 
                     if a > b:
                         best_pheromone = field
+        '''
+        best_pheromone = None
+        for field in neighbours:
+            if field.food_pheromone_level > 0:
+                if best_pheromone == None:
+                    best_pheromone = field
+                elif field.food_pheromone_level > best_pheromone.food_pheromone_level:
+                    best_pheromone = field
 
-        if best_pheromone != None:
+        SEARCH_FOOD_RANDOM_FACTOR = 2
+        if best_pheromone != None and randint(0, 100) < 100 - SEARCH_FOOD_RANDOM_FACTOR:
             self.move(self.ant.x, self.ant.y, best_pheromone.x, best_pheromone.y)
             self.ant.x = best_pheromone.x
             self.ant.y = best_pheromone.y
@@ -298,7 +315,7 @@ class SearchHomeState(AntState):
 
         # exclude borders and obstacles
         neighbours = [x for x in neighbours if x != None]
-
+        '''
         best_pheromone = None
         for field in neighbours:
             if field.home_pheromone_level > 0:
@@ -310,8 +327,24 @@ class SearchHomeState(AntState):
 
                     if a > b:
                         best_pheromone = field
+        '''
+        attractivess = 0
+        best_pheromone = None
+        for field in neighbours:
+            if field.home_pheromone_level <= 0:
+                continue
+            dist = distance(field.x, field.y, self.ant.colony.home.x, self.ant.colony.home.y)
+            tmp_attractivess = (field.home_pheromone_level / 255) + (((128 - dist) / 128) * HOME_DISTANCE_FACTOR)
+            if attractivess < tmp_attractivess:
+                attractivess = tmp_attractivess
+                best_pheromone = field
+                # if best_pheromone == None:
+                #     best_pheromone = field
+                #     attractivess = field.pheromone_level + distance(field.x, field.y, self.ant.colony.home.x, self.ant.colony.home.y)
+                # elif field.home_pheromone_level > best_pheromone.home_pheromone_level:
+                #     best_pheromone = field
 
-        if best_pheromone != None:
+        if best_pheromone != None and randint(0, 100) < 100 - SEARCH_HOME_RANDOM_FACTOR:
             self.move(self.ant.x, self.ant.y, best_pheromone.x, best_pheromone.y)
             self.ant.x = best_pheromone.x
             self.ant.y = best_pheromone.y
@@ -476,4 +509,7 @@ class WorldFacade():
         self.world.move_ant(source_x, source_y, destination_x, destination_y)
 
     def deposit_pheromone(self, x, y, pheromone_type, pheromone_strength):
-        self.world.deposit_pheromone(x, y, pheromone_type, pheromone_strength)
+        if pheromone_type is PheromoneType.HOME:
+            self.world.deposit_pheromone(x, y, pheromone_type, int(pheromone_strength * 0.5))
+        else:
+            self.world.deposit_pheromone(x, y, pheromone_type, int(pheromone_strength * 0.2))

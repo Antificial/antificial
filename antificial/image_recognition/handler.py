@@ -221,7 +221,7 @@ def work():
     FPSCounter = 0
     stableBoundariesC = 0
     ballCenters = []
-    stream = getVideoFeed()
+    stream = getVideoFeed(1)
     minC = np.array([0,30,30])
     maxC = np.array([95,111,116])
     global STARTSIGNALSEND

@@ -71,7 +71,7 @@ Builder.load_string("""
         font_size: 70
         center_x: root.width / 2
         top: root.top / 2
-        text: "Press [Space] to play!"
+        text: ""
 
 <SimulationWidget>:
     p1_time_label: p1_time_label
@@ -298,9 +298,9 @@ class StartWidget(Widget):
         elif keycode[0] == 275: # right arrow
             CURRENT_SCREEN = (CURRENT_SCREEN + 1) % len(SCREEN_LIST)
             change_screen(SCREEN_LIST[CURRENT_SCREEN].name)
-        elif keycode[0] == 32: # spacebar
+        else:
             FW_CC_QUEUE.put("[KEY] %d" % keycode[0])
-        elif keycode[0] == 100: # D
+        if keycode[0] == 100: # D
             DEBUG = not DEBUG
 
 class SimulationWidget(Widget):
@@ -556,7 +556,7 @@ GREEN = Color(0, 1, 0, 1)
 GRAY = Color(0.5, 0.5, 0.5)
 
 IPS = 10
-ANT_COUNT = 50
+ANT_COUNT = 100
 CURRENT_SCREEN = 0
 GAME_BEGIN = 0
 GAME_RUNNING = 1
