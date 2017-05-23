@@ -71,7 +71,7 @@ Builder.load_string("""
         font_size: 70
         center_x: root.width / 2
         top: root.top / 2
-        text: ""
+        text: "Press [Space] to play!"
 
 <SimulationWidget>:
     p1_time_label: p1_time_label
@@ -419,12 +419,12 @@ class SimulationWidget(Widget):
                         display_home_pheromone = SHOW_HOME_PHEROMONES and home_pheromone_level > 0
                         display_food_pheromone = SHOW_FOOD_PHEROMONES and food_pheromone_level > 0
                         if display_home_pheromone and display_food_pheromone:
-                            alpha = ((food_pheromone_level / 255) + (home_pheromone_level / 255)) / 2
+                            alpha = (((food_pheromone_level / 255) + (home_pheromone_level / 255)) / 2)
                             self.cells[x][y_inverted].children[0].rgba = [0, 1, 1, alpha]
                         elif display_home_pheromone:
-                            self.cells[x][y_inverted].children[0].rgba = [0, 0, 1, home_pheromone_level / 255]
+                            self.cells[x][y_inverted].children[0].rgba = [0, 0, 1, home_pheromone_level / 255 * ALPHA_DAMPEN]
                         elif display_food_pheromone:
-                            self.cells[x][y_inverted].children[0].rgba = [0, 1, 0, food_pheromone_level / 255]
+                            self.cells[x][y_inverted].children[0].rgba = [0, 1, 0, food_pheromone_level / 255 * ALPHA_DAMPEN]
 
 class EndWidget(Widget):
     title = ObjectProperty(None)
@@ -555,6 +555,7 @@ BLUE = Color(0, 0, 1, 1)
 GREEN = Color(0, 1, 0, 1)
 GRAY = Color(0.5, 0.5, 0.5)
 
+ALPHA_DAMPEN = 0.5
 IPS = 10
 ANT_COUNT = 100
 CURRENT_SCREEN = 0
