@@ -36,7 +36,7 @@ from kivy.uix.scatter import Scatter
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.label import Label
 from kivy.uix.slider import Slider
-from kivy.properties import ObjectProperty, StringProperty, NumericProperty
+from kivy.properties import ObjectProperty, StringProperty, NumericProperty, ListProperty
 from kivy.graphics.vertex_instructions import Line, Rectangle
 from kivy.graphics import Color, InstructionGroup
 from kivy.clock import Clock
@@ -132,13 +132,17 @@ Builder.load_string("""
                 color: 1, 1, 1, 1
 
 <EndWidget>:
-    title: title_label
-    Label:
-        id: title_label
-        font_size: 70
-        center_x: root.width / 2
-        top: root.top / 2
-        text: "Game Finished"
+    canvas.before:
+        Color:
+            rgba: self.color_1
+        Rectangle:
+            pos: 0, 0
+            size: root.width / 2, root.height
+        Color:
+            rgba: self.color_2
+        Rectangle:
+            pos: root.width / 2, 0
+            size: root.width / 2, root.height
 
 <MenuWidget>:
     btn_quit: btn_quit
@@ -339,19 +343,18 @@ class SimulationWidget(Widget):
     def update_data(self, dt):
         global DEBUG, TIME, SCORE, GAME_DURATION
         x, y = Window.size
-        if DEBUG:
+        if GAME_STATE == GAME_RUNNING:
+            TIME += 1
+            seconds_to_display = GAME_DURATION - TIME
+            if seconds_to_display < 0:
+                seconds_to_display = 0
+        if DEBUG and GAME_STATE == GAME_RUNNING:
             self.fps.text = "%d FPS : RES: (%d, %d)" % (round(Clock.get_fps()), x, y)
-            if GAME_STATE == GAME_RUNNING:
-                TIME += 1
-                seconds_to_display = GAME_DURATION - TIME
-                if seconds_to_display < 0:
-                    seconds_to_display = 0
-
-                display_time = str(datetime.timedelta(seconds=seconds_to_display))
-                self.p1_time_label.text = display_time
-                self.p1_score_label.text = "Score: %04d" % SCORES[0]
-                self.p2_time_label.text = display_time
-                self.p2_score_label.text = "Score: %04d" % SCORES[1]
+            display_time = str(datetime.timedelta(seconds=seconds_to_display))
+            self.p1_time_label.text = display_time
+            self.p1_score_label.text = "Score: %04d" % SCORES[0]
+            self.p2_time_label.text = display_time
+            self.p2_score_label.text = "Score: %04d" % SCORES[1]
         else:
             self.fps.text = ""
             self.p1_time_label.text = ""
@@ -427,10 +430,24 @@ class SimulationWidget(Widget):
                             self.cells[x][y_inverted].children[0].rgba = [0, 1, 0, food_pheromone_level / 255 * ALPHA_DAMPEN]
 
 class EndWidget(Widget):
-    title = ObjectProperty(None)
+    color_win = ListProperty([0,1,0,1])
+    color_lose = ListProperty([1,0,0,1])
+    color_1 = ListProperty([0,0,0,1])
+    color_2 = ListProperty([0,0,0,1])
 
     def __init__(self, **kwargs):
         super(EndWidget, self).__init__(**kwargs)
+
+    def update(self):
+        if SCORES[0] > SCORES[1]:
+            self.color_1 = self.color_win
+            self.color_2 = self.color_lose
+        elif SCORES[0] < SCORES[1]:
+            self.color_1 = self.color_lose
+            self.color_2 = self.color_wine
+        else:
+            self.color_1.rgb = [0.5, 0.5, 0.5]
+            self.color_2.rgb = [0.5, 0.5, 0.5]
 
 class MenuWidget(Widget):
     btn_quit = ObjectProperty(None)
@@ -499,6 +516,7 @@ def poll(dt):
                     change_screen("simulation")
                 elif GAME_STATE == GAME_END:
                     TIME = 0
+                    SCREEN_LIST[3].children[0].update()
                     change_screen("end")
             elif input.startswith("[IPS]"):
                 global IPS

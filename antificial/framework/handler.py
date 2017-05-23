@@ -147,9 +147,7 @@ def app_loop():
             print("[FW] Game State is %d" % GAME_STATE)
             FW_INPUT.send("[GAME_STATE] %d" % GAME_STATE)
             IR_CC_QUEUE.put("[GAME_STATE] %d" % GAME_STATE)
-            # for every player:
-                # FW_INPUT.send("[RESULTS] %d:%d" % (PLAYER, SCORE))
-            time.sleep(1)
+            time.sleep(10)
             GAME_STATE = GAME_BEGIN
 
 # Run this from other code
