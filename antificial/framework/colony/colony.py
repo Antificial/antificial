@@ -60,12 +60,16 @@ class Colony(GameObject):
         self.ants = []
         self.observers = []
         self.gamerules = None
+        self.scores = [0 for x in range(2)]
 
         for i in range(antcount):
             ant = Ant(self)
             state = SearchFoodState(ant)
             ant.init_state(state)
             self.ants.append(ant)
+
+    def drop_off_food(self, player):
+        self.scores[player] += 1
 
     def init_gamerules(self, gamerules):
         self.gamerules = gamerules
@@ -89,6 +93,7 @@ class Colony(GameObject):
     def update(self):
         for ant in self.ants:
             ant.update()
+        return self.scores
 
 class Home(GameObject):
     def __init__(self, x, y, world):
@@ -365,6 +370,8 @@ class SearchHomeState(AntState):
             self.ant.orientation = Orientation.left(self.ant.orientation)
 
     def move(self, current_x, current_y, target_x, target_y):
+        if target_x == self.ant.colony.home.x and target_y == self.ant.colony.home.y:
+            self.ant.colony.drop_off_food(self.ant.player)
         self.ant.colony.world.move_ant(current_x, current_y, target_x, target_y)
         self.ant.colony.world.deposit_pheromone(current_x, current_y, PheromoneType.FOOD, 255)
 

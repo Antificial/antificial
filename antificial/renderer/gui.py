@@ -349,9 +349,9 @@ class SimulationWidget(Widget):
 
                 display_time = str(datetime.timedelta(seconds=seconds_to_display))
                 self.p1_time_label.text = display_time
-                self.p1_score_label.text = "Score: %03d" % SCORES[0]
+                self.p1_score_label.text = "Score: %04d" % SCORES[0]
                 self.p2_time_label.text = display_time
-                self.p2_score_label.text = "Score: %03d" % SCORES[1]
+                self.p2_score_label.text = "Score: %04d" % SCORES[1]
         else:
             self.fps.text = ""
             self.p1_time_label.text = ""
@@ -500,14 +500,12 @@ def poll(dt):
                 elif GAME_STATE == GAME_END:
                     TIME = 0
                     change_screen("end")
-            elif input.startswith("[SCORE]"):
-                player = int(input[:7].split(" ")[0])
-                score = int(input[:7].split(" ")[1])
-                SCORES[player] = score
             elif input.startswith("[IPS]"):
                 global IPS
                 IPS = int(input[6:])
                 SCREEN_LIST[4].children[0].tick_slider.value = IPS
+        elif isinstance(input, list):
+            SCORES = input
 
 def index_of_screen(name):
     for i, screen in enumerate(SCREEN_LIST):

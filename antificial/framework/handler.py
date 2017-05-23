@@ -105,8 +105,9 @@ def game_loop():
         start = time.perf_counter()
         handle_commands()
         handle_pipe() # update balls
-        COLONY.update() # move ants
+        scores = COLONY.update() # move ants
         WORLD.decay_pheromones(DECAY_RATE_HOME, DECAY_RATE_FOOD) # update pheromones
+        FW_INPUT.send(scores)
         end = time.perf_counter()
         proc_time = end - start
         sleep_time = wait_time - proc_time if proc_time < wait_time else 0
