@@ -18,8 +18,8 @@ XMIN = 25.5
 XMAX = 934.5
 YMIN = 28.5
 YMAX = 514.5
-SHOW_DEBUG_WINDOWS = True
-DEBUG_BALLS_ONLY = False
+SHOW_DEBUG_WINDOWS = False
+DEBUG_BALLS_ONLY = True
 
 class Settings(object):
     DP = 3
@@ -232,9 +232,9 @@ def work():
 
         if DEBUG_BALLS_ONLY:
             debug_ball_coordinates = []
-            debug_ball_coordinates = add_debug_ball(debug_ball_coordinates, 30, 30, 0)
+            debug_ball_coordinates = add_debug_ball(debug_ball_coordinates, 50, 40, 0)
             debug_ball_coordinates = add_debug_ball(debug_ball_coordinates, 90, 10, 0)
-            debug_ball_coordinates = add_debug_ball(debug_ball_coordinates, 100, 60, 0)
+            debug_ball_coordinates = add_debug_ball(debug_ball_coordinates, 70, 60, 0)
             IR_INPUT.send(debug_ball_coordinates)
             cv2.destroyAllWindows()
             stream.release()

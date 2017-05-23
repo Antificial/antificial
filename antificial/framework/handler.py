@@ -34,7 +34,7 @@ def shutdown():
     print("[FW] Shutting down...")
 
 def handle_action(s):
-    global IPS, DECAY_RATE_HOME, DECAY_RATE_FOOD, GAME_DURATION
+    global IPS, DECAY_RATE_HOME, DECAY_RATE_FOOD, GAME_DURATION, ANT_COUNT
     if s.startswith("[CMD]"):
         cmd = s[6:]
         if cmd == "done":
@@ -45,26 +45,24 @@ def handle_action(s):
         IPS = int(s[6:])
     elif s.startswith("[HTD]"):
         DECAY_RATE_HOME = int(s[6:])
-        print(DECAY_RATE_HOME)
     elif s.startswith("[FTD]"):
         DECAY_RATE_FOOD = int(s[6:])
-        print(DECAY_RATE_FOOD)
     elif s.startswith("[GDU]"):
         GAME_DURATION = int(s[6:])
-        print(GAME_DURATION)
+    elif s.startswith("[IAC]"):
+        ANT_COUNT = int(s[6:])
 
 def handle_commands():
     try:
-        input = FW_CC_QUEUE.get(False)
-        handle_action(input)
+        while not FW_CC_QUEUE.empty():
+            input = FW_CC_QUEUE.get(False)
+            handle_action(input)
     except:
         pass
 
 def handle_pipe():
     if IR_OUTPUT.poll(TIMEOUT):
         input = IR_OUTPUT.recv()
-        #util.iprint("[FW] Received {input}!")
-        #util.iprint("[FW] Sending {input} to RR...")
         if isinstance(input, list):
             global WORLD
             WORLD.update_food(input)
@@ -91,9 +89,14 @@ def game_loop():
     start_time = time.time()
     t = time.time()
     finish_time = start_time + GAME_DURATION
+    start_IPS = IPS
+    scope_IPS = IPS
     while t < finish_time and RUNNING:
+        if IPS != start_IPS:
+            scope_IPS = IPS
+            start_IPS = IPS
         finish_time = start_time + GAME_DURATION
-        wait_time = 1 / IPS
+        wait_time = 1 / scope_IPS
         t = time.time()
         start = time.perf_counter()
         handle_commands()
@@ -103,15 +106,18 @@ def game_loop():
         end = time.perf_counter()
         proc_time = end - start
         sleep_time = wait_time - proc_time if proc_time < wait_time else 0
+        if sleep_time == 0 and t % 5 < 0.1:
+            actual_ips = int(1 / proc_time)
+            if actual_ips + 1 < scope_IPS:
+                print("[FW] Dropping ticks. Should be 1/%d but is 1/%d. Adjusting down..." % (IPS, actual_ips))
+                scope_IPS = int(actual_ips) + 1
+                FW_INPUT.send("[IPS] %d" % scope_IPS)
         time.sleep(sleep_time)
 
 def app_loop():
     global COLONY, GAMERULES, GAME_STATE
     while RUNNING:
         handle_commands()
-        COLONY = col.Colony(WORLD, HOME, ANT_COUNT)
-        GAMERULES = game.GameRules(COLONY)
-        COLONY.init_gamerules(GAMERULES)
         handle_pipe()
         if GAME_STATE == GAME_BEGIN and RUNNING:
             print("[FW] Game State is %d" % GAME_STATE)
@@ -121,6 +127,9 @@ def app_loop():
                 handle_commands()
                 handle_pipe()
                 time.sleep(0.5)
+            COLONY = col.Colony(WORLD, HOME, ANT_COUNT)
+            GAMERULES = game.GameRules(COLONY)
+            COLONY.init_gamerules(GAMERULES)
             GAME_STATE = GAME_RUNNING
         if GAME_STATE == GAME_RUNNING and RUNNING:
             print("[FW] Game State is %d" % GAME_STATE)

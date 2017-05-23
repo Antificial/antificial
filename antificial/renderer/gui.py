@@ -146,12 +146,13 @@ Builder.load_string("""
     game_duration_slider: game_duration_slider
     home_trail_slider: home_trail_slider
     food_trail_slider: food_trail_slider
+    ant_count_slider: ant_count_slider
     GridLayout:
         cols: 1
-        rows: 4
+        rows: 5
         spacing: 10
-        size: root.width / 2, root.height / 2
-        pos: 0, root.height / 2
+        size: root.width / 2, root.height / 1.5
+        pos: 0, root.height / 3
         GridLayout:
             cols: 1
             rows: 2
@@ -235,6 +236,27 @@ Builder.load_string("""
                 max: 100
                 step: 1
                 value: 4
+                value_track: True
+        GridLayout:
+            cols: 1
+            rows: 2
+            spacing: 10
+            padding: 10
+            row_default_height: 80
+            row_force_default: True
+            BoxLayout:
+                Label:
+                    font_size: 48
+                    text: "Initial Ant Count"
+                Label:
+                    font_size: 48
+                    text:  str(int(ant_count_slider.value))
+            Slider:
+                id: ant_count_slider
+                min: 0
+                max: 1000
+                step: 10
+                value: 50
                 value_track: True
     BoxLayout:
         orientation: "horizontal"
@@ -416,6 +438,7 @@ class MenuWidget(Widget):
     game_duration_slider = ObjectProperty(None)
     home_trail_slider = ObjectProperty(None)
     food_trail_slider = ObjectProperty(None)
+    ant_count_slider = ObjectProperty(None)
     btn_count = NumericProperty(1)
 
     def __init__(self, **kwargs):
@@ -426,6 +449,9 @@ class MenuWidget(Widget):
         self.game_duration_slider.bind(value=self.on_game_duration_slider_change)
         self.home_trail_slider.bind(value=self.on_home_trail_slider_change)
         self.food_trail_slider.bind(value=self.on_food_trail_slider_change)
+        self.ant_count_slider.bind(value=self.on_ant_count_slider_change)
+        self.tick_slider.value = IPS
+        self.ant_count_slider.value = ANT_COUNT
 
     def on_tick_slider_change(self, instance, value):
         FW_CC_QUEUE.put("[IPS] %d" % value)
@@ -440,6 +466,9 @@ class MenuWidget(Widget):
 
     def on_food_trail_slider_change(self, instance, value):
         FW_CC_QUEUE.put("[FTD] %d" % value)
+
+    def on_ant_count_slider_change(self, instance, value):
+        FW_CC_QUEUE.put("[IAC] %d" % value)
 
     def quit(self):
         IR_CC_QUEUE.put("[CMD] done")
@@ -475,6 +504,10 @@ def poll(dt):
                 player = int(input[:7].split(" ")[0])
                 score = int(input[:7].split(" ")[1])
                 SCORES[player] = score
+            elif input.startswith("[IPS]"):
+                global IPS
+                IPS = int(input[6:])
+                SCREEN_LIST[4].children[0].tick_slider.value = IPS
 
 def index_of_screen(name):
     for i, screen in enumerate(SCREEN_LIST):
@@ -522,6 +555,8 @@ BLUE = Color(0, 0, 1, 1)
 GREEN = Color(0, 1, 0, 1)
 GRAY = Color(0.5, 0.5, 0.5)
 
+IPS = 10
+ANT_COUNT = 50
 CURRENT_SCREEN = 0
 GAME_BEGIN = 0
 GAME_RUNNING = 1
