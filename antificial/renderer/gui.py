@@ -218,7 +218,7 @@ Builder.load_string("""
                 min: 0
                 max: 100
                 step: 1
-                value: 4
+                value: 1
                 value_track: True
         GridLayout:
             cols: 1
@@ -403,21 +403,12 @@ class SimulationWidget(Widget):
 
                 if is_nest:
                     self.cells[x][y_inverted].children[0].rgb = [0.5, 0.5, 0.5]
-                elif ant_count > 0:
-                    self.cells[x][y_inverted].children[0].rgb = [1, 1, 1]
                 else:
                     has_food = False
                     for player_index in range(PLAYER_COUNT):
-                        food_level = WORLD_DATA[i + 4 + player_index]
-                        if food_level > 0:
+                        if WORLD_DATA[i + 4 + player_index] > 0:
                             has_food = True
-                            if player_index == 0:
-                                self.cells[x][y_inverted].children[0].rgba = [1, 0, 0, food_level / 255]
-                            elif player_index == 1:
-                                self.cells[x][y_inverted].children[0].rgba = [0, 1, 0, food_level / 255]
-                            else:
-                                self.cells[x][y_inverted].children[0].rgba = [0, 0, 1, food_level / 255]
-
+                            break
                     if not has_food:
                         display_home_pheromone = SHOW_HOME_PHEROMONES and home_pheromone_level > 0
                         display_food_pheromone = SHOW_FOOD_PHEROMONES and food_pheromone_level > 0
@@ -428,6 +419,18 @@ class SimulationWidget(Widget):
                             self.cells[x][y_inverted].children[0].rgba = [0, 0, 1, home_pheromone_level / 255 * ALPHA_DAMPEN]
                         elif display_food_pheromone:
                             self.cells[x][y_inverted].children[0].rgba = [0, 1, 0, food_pheromone_level / 255 * ALPHA_DAMPEN]
+                    if ant_count > 0:
+                        self.cells[x][y_inverted].children[0].rgb = [1, 1, 1]
+                    for player_index in range(PLAYER_COUNT):
+                        food_level = WORLD_DATA[i + 4 + player_index]
+                        if food_level > 0:
+                            has_food = True
+                            if player_index == 0:
+                                self.cells[x][y_inverted].children[0].rgba = [1, 0, 0, food_level / 255]
+                            elif player_index == 1:
+                                self.cells[x][y_inverted].children[0].rgba = [0, 1, 0, food_level / 255]
+                            else:
+                                self.cells[x][y_inverted].children[0].rgba = [0, 0, 1, food_level / 255]
 
 class EndWidget(Widget):
     color_win = ListProperty([0,1,0,1])
@@ -573,7 +576,7 @@ GRAY = Color(0.5, 0.5, 0.5)
 
 ALPHA_DAMPEN = 0.5
 IPS = 10
-ANT_COUNT = 100
+ANT_COUNT = 300
 CURRENT_SCREEN = 0
 GAME_BEGIN = 0
 GAME_RUNNING = 1
