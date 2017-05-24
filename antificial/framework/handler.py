@@ -65,7 +65,7 @@ def handle_commands():
         pass
 
 def handle_pipe():
-    if IR_OUTPUT.poll(TIMEOUT):
+    while IR_OUTPUT.poll(TIMEOUT):
         input = IR_OUTPUT.recv()
         if isinstance(input, list):
             global WORLD
