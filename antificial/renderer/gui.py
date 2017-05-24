@@ -7,7 +7,7 @@ from random import randint
 # TODO: replace this with push through queue?
 from framework import handler
 
-PROJECTOR_MODE = False
+PROJECTOR_MODE = True
 
 from kivy.config import Config
 Config.set("kivy", "log_level", "warning") # one of: trace, debug, info, warning, error, critical
@@ -447,7 +447,7 @@ class EndWidget(Widget):
             self.color_2 = self.color_lose
         elif SCORES[0] < SCORES[1]:
             self.color_1 = self.color_lose
-            self.color_2 = self.color_wine
+            self.color_2 = self.color_win
         else:
             self.color_1.rgb = [0.5, 0.5, 0.5]
             self.color_2.rgb = [0.5, 0.5, 0.5]

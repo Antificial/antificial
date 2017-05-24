@@ -26,9 +26,9 @@ class Settings(object):
     DP = 3
     MinDistance = 22
     CannyValue = 30
-    Threshold = 50
+    Threshold = 40
     MinRadius = 12
-    MaxRadius = 17
+    MaxRadius = 19
 
     def get(self):
         return self.DP, self.MinDistance, self.CannyValue, self.Threshold, self.MinRadius, self.MaxRadius
@@ -154,7 +154,7 @@ def processData(ballCenters):
     ballPositions = sumList/amountValidBalls
     return ballPositions
 
-def convertToGameWorldCoordinates(ballPositions):
+def convertToGameWorldCoordinates(ballPositions, player):
    global GRID_RESOLUTION, XMAX, XMIN, YMIN, YMAX
    grid_width = GRID_RESOLUTION[0]
    grid_heigth = GRID_RESOLUTION[1]
@@ -178,7 +178,7 @@ def convertToGameWorldCoordinates(ballPositions):
 
        for currentX in range(newX - 1, newX + 2):
            for currentY in range(newY - 1, newY + 2):
-               gameCoordinates.append((currentX, currentY, 0))
+               gameCoordinates.append((currentX, currentY, player))
 
    return gameCoordinates
 
@@ -191,9 +191,9 @@ def init():
         cv2.createTrackbar("DP", "settings", 3, 5, SETTINGS.updateDP)
         cv2.createTrackbar("mindist", "settings", 22, 100, SETTINGS.updateMinDistance)
         cv2.createTrackbar("cannyValue", "settings", 30, 250, SETTINGS.updateCannyValue)
-        cv2.createTrackbar("threshold", "settings", 50, 75, SETTINGS.updateThreshold)
+        cv2.createTrackbar("threshold", "settings", 40, 75, SETTINGS.updateThreshold)
         cv2.createTrackbar("minR", "settings", 12, 100, SETTINGS.updateMinRadius)
-        cv2.createTrackbar("maxR", "settings", 17, 100, SETTINGS.updateMaxRadius)
+        cv2.createTrackbar("maxR", "settings", 19, 100, SETTINGS.updateMaxRadius)
 
 def getVideoFeed(src=0):
     stream = cv2.VideoCapture(src)
@@ -220,13 +220,20 @@ def work():
     FPS = 20.
     FPSCounter = 0
     stableBoundariesC = 0
-    ballCenters = []
+    redBallCenters = []
+    greenBallCenters = []
     stream = getVideoFeed()
-    minC = np.array([48,18,64])
-    maxC = np.array([103,64,118])
-    global STARTSIGNALSEND
+    minimunRed = np.array([0,0,96])
+    maximumRed = np.array([64,78,255])
     
-
+    minimunGreen = np.array([0,121,0])
+    maximumGreen = np.array([191,255,73])
+    
+    global STARTSIGNALSEND
+    # For recording 
+    #fourcc = cv2.VideoWriter_fourcc(*'XVID')
+    #out.write(gameBoardROI)
+    #out = cv2.VideoWriter('output.avi',fourcc, 20.0, (960,540))
     while RUNNING:
         handle_commands()
         begin = time.time()
@@ -360,54 +367,84 @@ def work():
                 gameBoardROI = cv2.warpPerspective(original,m,(960,540))
 
 
-            mask = cv2.inRange(gameBoardROI, minC, maxC)
-            colorRange = cv2.bitwise_and(gameBoardROI, gameBoardROI, mask = mask)
+            redMask = cv2.inRange(gameBoardROI, minimunRed, maximumRed)
+            redFilter = cv2.bitwise_and(gameBoardROI, gameBoardROI, mask = redMask)
 
-            gameBoardROIGray = cv2.cvtColor(colorRange, cv2.COLOR_BGR2GRAY)
-            gameBoardROIGray = cv2.GaussianBlur(gameBoardROIGray, (3,3),4)
-            gameBoardROIGray = cv2.erode(gameBoardROIGray, (20,20))
-            gameBoardROIGray = cv2.dilate(gameBoardROIGray, (20,20))
-            gameBoardROIGray = cv2.dilate(gameBoardROIGray, (20,20))
-            gameBoardROIGray = cv2.erode(gameBoardROIGray, (20,20))
-            gameBoardROIGray = cv2.Canny(gameBoardROIGray, 60,80, apertureSize = 3)
-            gameBoardROIGray = cv2.GaussianBlur(gameBoardROIGray, (7,7),0)
+            greenMask = cv2.inRange(gameBoardROI, minimunGreen, maximumGreen)
+            greenFilter = cv2.bitwise_and(gameBoardROI, gameBoardROI, mask = greenMask)
+            
+            
+            gameBoardROIGray = cv2.cvtColor(redFilter, cv2.COLOR_BGR2GRAY)
+            redCircleImage = cv2.GaussianBlur(gameBoardROIGray, (3,3),4)
+            
+            gameBoardROIGray = cv2.cvtColor(greenFilter, cv2.COLOR_BGR2GRAY)
+            greenCircleImage = cv2.GaussianBlur(gameBoardROIGray, (3,3),4)
+            
+            #gameBoardROIGray = cv2.erode(gameBoardROIGray, (20,20))
+            #gameBoardROIGray = cv2.dilate(gameBoardROIGray, (20,20))
+            #gameBoardROIGray = cv2.dilate(gameBoardROIGray, (20,20))
+            #gameBoardROIGray = cv2.erode(gameBoardROIGray, (20,20))
+            #gameBoardROIGray = cv2.Canny(gameBoardROIGray, 60,80, apertureSize = 3)
+            #gameBoardROIGray = cv2.GaussianBlur(gameBoardROIGray, (7,7),0)
 
             dpValue, minDist, cannyValue, threshold, minR, maxR = SETTINGS.get()
-            circles = cv2.HoughCircles(gameBoardROIGray, cv2.HOUGH_GRADIENT, dpValue, minDist, param1 = cannyValue, param2 = threshold, minRadius = minR, maxRadius = maxR)
+            redCircles = cv2.HoughCircles(redCircleImage, cv2.HOUGH_GRADIENT, dpValue, minDist, param1 = cannyValue, param2 = threshold, minRadius = minR, maxRadius = maxR)
+            greenCircles = cv2.HoughCircles(greenCircleImage, cv2.HOUGH_GRADIENT, dpValue, minDist, param1 = cannyValue, param2 = threshold, minRadius = minR, maxRadius = maxR)
 
-            if circles is not None:
-                circles = circles[0,:16]
-                ballCenters.append([])
-                for i in circles:
-                    cv2.circle(gameBoardROI,(i[0],i[1]),i[2],(0,255,0),2)
+            if redCircles is not None:
+                redCircles = redCircles[0,:16]
+                redBallCenters.append([])
+                for i in redCircles:
+                    cv2.circle(gameBoardROI,(i[0],i[1]),i[2],(0,0,255),2)
                     cv2.circle(gameBoardROI,(i[0],i[1]),2,(0,0,255),3)
-                    ballCenters[-1].append((i[0],i[1]))
+                    redBallCenters[-1].append((i[0],i[1]))
 
-                ballCenters[-1].append(len(circles))
+                redBallCenters[-1].append(len(redCircles))
 
+            if greenCircles is not None:
+                greenCircles = greenCircles[0,:16]
+                greenBallCenters.append([])
+                for i in greenCircles:
+                    cv2.circle(gameBoardROI,(i[0],i[1]),i[2],(0,255,0),2)
+                    cv2.circle(gameBoardROI,(i[0],i[1]),2,(0,255,0),3)
+                    greenBallCenters[-1].append((i[0],i[1]))
+
+                greenBallCenters[-1].append(len(greenCircles))
+                
             if SHOW_DEBUG_WINDOWS:
                 cv2.imshow("drawOriginal", drawOriginal)
                 cv2.imshow("gameBoardROI", gameBoardROI)
                 cv2.imshow("gameBoardROIGray", gameBoardROIGray)
-                cv2.imshow("colorRange", colorRange)
+                cv2.imshow("redFilter", redFilter)
+                cv2.imshow("greenFilter", greenFilter)
 
-
+            
+            mergedList = []
             if FPSCounter == FPS-1:
-                if len(ballCenters) > 0:
-                    ballPositions = processData(ballCenters)
-                    gameCoordinates = convertToGameWorldCoordinates(ballPositions)
-                    IR_INPUT.send(gameCoordinates)
+                if len(redBallCenters) > 0:
+                    redBalls = processData(redBallCenters)
+                    redBallCoordinates = convertToGameWorldCoordinates(redBalls, 0)
+                    mergedList += redBallCoordinates
+                if len(greenBallCenters) > 0:
+                    greenBalls = processData(greenBallCenters)
+                    greenBallCoordinates = convertToGameWorldCoordinates(greenBalls, 1)
+                    mergedList += greenBallCoordinates
                 else:
-                    ballPositions = []
-                ballCenters = []
+                    redBalls = []
+                    greenBalls = []
+                IR_INPUT.send(mergedList)
+                redBallCenters = []
+                greenBallCenters = []
 
                 if SHOW_DEBUG_WINDOWS:
-                    if len(ballPositions) != 0:
-                        for x,y in ballPositions:
+                    if len(redBalls) != 0:
+                        for x,y in redBalls:
                             cv2.circle(gameBoardROI,(int(x),int(y)),10,(255,0,0),-1)
-                        cv2.imshow("gameBoardROIStatic", gameBoardROI)
-                    else:
-                        cv2.imshow("gameBoardROIStatic", gameBoardROI)
+                    if len(greenBalls) != 0:
+                        for x,y in greenBalls:
+                            cv2.circle(gameBoardROI,(int(x),int(y)),10,(255,0,0),-1)
+                    
+                    cv2.imshow("gameBoardROIStatic", gameBoardROI)
 
         if GAME_STATE == GAME_END:
             cv2.destroyAllWindows()
