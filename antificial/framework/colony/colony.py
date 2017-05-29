@@ -224,6 +224,7 @@ class SearchFoodState(AntState):
         if len(neighbours) > 0:
             next_field = neighbours[randint(0, len(neighbours) - 1)]
             self.move(self.ant.x, self.ant.y, next_field.x, next_field.y)
+            return
 
         # strategy 5: else turn randomly left or right
         if bool(getrandbits(1)) is True:
