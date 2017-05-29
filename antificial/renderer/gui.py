@@ -207,22 +207,34 @@ class SimulationWidget(Widget):
                                 self.cells[x][y_inverted].children[0].rgba = [0, 0, 1, food_level / 255]
 
 class EndWidget(Widget):
-    color_win = ListProperty([0,1,0,1])
-    color_lose = ListProperty([1,0,0,1])
+    color_win = ListProperty([28/255,188/255,40/255,0.75])
+    color_lose = ListProperty([244/255,77/255,27/255,0.75])
     color_1 = ListProperty([0,0,0,1])
     color_2 = ListProperty([0,0,0,1])
+    winner_image = ObjectProperty(None)
+    scale = NumericProperty(1.5)
+    winner_rotation = NumericProperty(-90)
+    winner_pos = ListProperty([0,0])
 
     def __init__(self, **kwargs):
         super(EndWidget, self).__init__(**kwargs)
+        self.winner_image.source = os.path.join(ROOT_PATH, "winner.zip")
 
     def update(self):
         if SCORES[0] > SCORES[1]:
+            self.winner_image.reload()
+            self.winner_rotation = -90
+            self.winner_pos = [self.width/4, self.height/2]
             self.color_1 = self.color_win
             self.color_2 = self.color_lose
         elif SCORES[0] < SCORES[1]:
+            self.winner_image.reload()
+            self.winner_rotation = 90
+            self.winner_pos = [self.width/4+self.width/2, self.height/2]
             self.color_1 = self.color_lose
             self.color_2 = self.color_win
         else:
+            self.winner_image.source = ""
             self.color_1.rgb = [0.5, 0.5, 0.5]
             self.color_2.rgb = [0.5, 0.5, 0.5]
 
