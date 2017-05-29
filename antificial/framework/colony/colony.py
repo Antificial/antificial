@@ -4,9 +4,12 @@ import operator
 import math
 from random import getrandbits, randint
 
-SEARCH_HOME_RANDOM_FACTOR = 2
-SEARCH_FOOD_RANDOM_FACTOR = 2
-HOME_DISTANCE_FACTOR = 2.0
+SEARCH_HOME_RANDOM_FACTOR = 10
+SEARCH_FOOD_RANDOM_FACTOR = 15
+HOME_DISTANCE_FACTOR = 4.07
+
+HOME_PHEROMONE_STRENGTH = 200
+FOOD_PHEROMONE_STRENGTH = 55
 
 def distance(x1, y1, x2, y2):
     return math.sqrt((x2-x1)**2+(y2-y1)**2)
@@ -118,7 +121,7 @@ class Food(GameObject):
         output += "x: " + str(self.x)
         output += ", y: " + str(self.y)
         output += ", player: " + str(self.player)
-        output += ", level: " + str(self.level) 
+        output += ", level: " + str(self.level)
         output += "}"
         return output
 
@@ -129,6 +132,9 @@ class Ant(GameObject):
         self.orientation = Orientation(randint(0, 7))
         self.state = None
         self.player = None
+        self.foundFood = False
+        self.lastX = None
+        self.lastY = None
 
     def init_state(self, state):
         self.state = state
@@ -170,6 +176,7 @@ class SearchFoodState(AntState):
         food = world.get_food(self.ant.x, self.ant.y)
         if food != None:
             self.ant.player = food.player
+            self.ant.foundFood = True
             self.ant.state = SearchHomeState(self.ant)
             return
 
@@ -192,8 +199,6 @@ class SearchFoodState(AntState):
 
         if best_food != None:
             self.move(self.ant.x, self.ant.y, best_food.x, best_food.y)
-            self.ant.x = best_food.x
-            self.ant.y = best_food.y
             return
 
         # strategy 3: if ant is close to food pheromone field, go there
@@ -203,21 +208,6 @@ class SearchFoodState(AntState):
         if home is None:
             neighbours = world.get_neighbours_by_orientation(self.ant.x, self.ant.y, self.ant.orientation)
 
-        # exclude borders and obstacles
-        neighbours = [x for x in neighbours if x != None]
-        '''
-        best_pheromone = None
-        for field in neighbours:
-            if field.food_pheromone_level > 0:
-                if best_pheromone == None:
-                    best_pheromone = field
-                else:
-                    a = field.food_pheromone_level * randint(80, 100)/100
-                    b = best_pheromone.food_pheromone_level
-
-                    if a > b:
-                        best_pheromone = field
-        '''
         best_pheromone = None
         for field in neighbours:
             if field.food_pheromone_level > 0:
@@ -226,20 +216,14 @@ class SearchFoodState(AntState):
                 elif field.food_pheromone_level > best_pheromone.food_pheromone_level:
                     best_pheromone = field
 
-        SEARCH_FOOD_RANDOM_FACTOR = 2
         if best_pheromone != None and randint(0, 100) < 100 - SEARCH_FOOD_RANDOM_FACTOR:
             self.move(self.ant.x, self.ant.y, best_pheromone.x, best_pheromone.y)
-            self.ant.x = best_pheromone.x
-            self.ant.y = best_pheromone.y
             return
 
         # strategy 4: if possible, move randomly straight-left, straight or straight-right
         if len(neighbours) > 0:
             next_field = neighbours[randint(0, len(neighbours) - 1)]
             self.move(self.ant.x, self.ant.y, next_field.x, next_field.y)
-            self.ant.x = next_field.x
-            self.ant.y = next_field.y
-            return
 
         # strategy 5: else turn randomly left or right
         if bool(getrandbits(1)) is True:
@@ -250,7 +234,12 @@ class SearchFoodState(AntState):
     def move(self, current_x, current_y, target_x, target_y):
         self.ant.colony.world.move_ant(current_x, current_y, target_x, target_y)
 
-        self.ant.colony.world.deposit_pheromone(current_x, current_y, PheromoneType.HOME, 255)
+        self.ant.x = target_x
+        self.ant.y = target_y
+        self.ant.lastX = current_x
+        self.ant.lastY = current_y
+
+        self.ant.colony.world.deposit_pheromone(current_x, current_y, PheromoneType.HOME)
 
         # calculate new orientation
         if current_x - target_x == 0:
@@ -288,8 +277,14 @@ class SearchHomeState(AntState):
         home = world.get_home(self.ant.x, self.ant.y)
         if home != None:
             self.ant.player = None
+            self.ant.foundFood = False
             self.ant.state = SearchFoodState(self.ant)
             return
+
+        # if the ant found the food set the foundFood flag, so the ant begins to deposit pheromones
+        food = world.get_food(self.ant.x, self.ant.y)
+        if food != None:
+            self.ant.foundFood = True
 
         # get neighbours as list
         neighbours = world.get_neighbours_as_list(self.ant.x, self.ant.y)
@@ -306,33 +301,20 @@ class SearchHomeState(AntState):
 
         if len(homes_nearby) > 0:
             target = homes_nearby[randint(0, len(homes_nearby) - 1)]
-            self.move(self.ant.x, self.ant.y, target.x, target.y)
-            self.ant.x = target.x
-            self.ant.y = target.y
+            self.move(self.ant.x, self.ant.y, target.x, target.y, self.ant.foundFood)
             return
 
-        # strategy 3: if ant is close to food pheromone field, go there
+        # strategy 3: if ant is not at a food location, consider only the ant's neighbours relative to its orientation
+        #food = world.get_food(self.ant.x, self.ant.y)
+        #if food is None:
+        #    neighbours = world.get_neighbours_as_list(self.ant.x, self.ant.y)
 
-        # if ant is not at a food location, consider only the ant's neighbours relative to its orientation
-        food = world.get_food(self.ant.x, self.ant.y)
-        if food is None:
-            neighbours = world.get_neighbours_by_orientation(self.ant.x, self.ant.y, self.ant.orientation)
-
-        # exclude borders and obstacles
-        neighbours = [x for x in neighbours if x != None]
-        '''
-        best_pheromone = None
+        # remove last position, so the ant does not endlessly walk back and forth
         for field in neighbours:
-            if field.home_pheromone_level > 0:
-                if best_pheromone == None:
-                    best_pheromone = field
-                else:
-                    a = field.home_pheromone_level * randint(80, 100)/100
-                    b = best_pheromone.home_pheromone_level
+            if field.x == self.ant.lastX and field.y == self.ant.lastY:
+                neighbours.remove(field)
+                break
 
-                    if a > b:
-                        best_pheromone = field
-        '''
         attractivess = 0
         best_pheromone = None
         for field in neighbours:
@@ -340,28 +322,23 @@ class SearchHomeState(AntState):
                 continue
             dist = distance(field.x, field.y, self.ant.colony.home.x, self.ant.colony.home.y)
             tmp_attractivess = (field.home_pheromone_level / 255) + (((128 - dist) / 128) * HOME_DISTANCE_FACTOR)
+
             if attractivess < tmp_attractivess:
                 attractivess = tmp_attractivess
                 best_pheromone = field
-                # if best_pheromone == None:
-                #     best_pheromone = field
-                #     attractivess = field.pheromone_level + distance(field.x, field.y, self.ant.colony.home.x, self.ant.colony.home.y)
-                # elif field.home_pheromone_level > best_pheromone.home_pheromone_level:
-                #     best_pheromone = field
 
         if best_pheromone != None and randint(0, 100) < 100 - SEARCH_HOME_RANDOM_FACTOR:
-            self.move(self.ant.x, self.ant.y, best_pheromone.x, best_pheromone.y)
-            self.ant.x = best_pheromone.x
-            self.ant.y = best_pheromone.y
+            self.move(self.ant.x, self.ant.y, best_pheromone.x, best_pheromone.y, self.ant.foundFood)
             return
 
         # strategy 4: if possible, move randomly straight-left, straight or straight-right
+        neighbours = world.get_neighbours_by_orientation(self.ant.x, self.ant.y, self.ant.orientation)
+
         if len(neighbours) > 0:
             next_field = neighbours[randint(0, len(neighbours) - 1)]
-            self.move(self.ant.x, self.ant.y, next_field.x, next_field.y)
-            self.ant.x = next_field.x
-            self.ant.y = next_field.y
-            return
+            if next_field != None:
+                self.move(self.ant.x, self.ant.y, next_field.x, next_field.y, self.ant.foundFood)
+                return
 
         # strategy 5: else turn randomly left or right
         if bool(getrandbits(1)) is True:
@@ -369,11 +346,19 @@ class SearchHomeState(AntState):
         else:
             self.ant.orientation = Orientation.left(self.ant.orientation)
 
-    def move(self, current_x, current_y, target_x, target_y):
+    def move(self, current_x, current_y, target_x, target_y, foundFood):
         if target_x == self.ant.colony.home.x and target_y == self.ant.colony.home.y:
             self.ant.colony.drop_off_food(self.ant.player)
+
         self.ant.colony.world.move_ant(current_x, current_y, target_x, target_y)
-        self.ant.colony.world.deposit_pheromone(current_x, current_y, PheromoneType.FOOD, 255)
+
+        self.ant.x = target_x
+        self.ant.y = target_y
+        self.ant.lastX = current_x
+        self.ant.lastY = current_y
+
+        if foundFood:
+            self.ant.colony.world.deposit_pheromone(current_x, current_y, PheromoneType.FOOD)
 
         # calculate new orientation
         if current_x - target_x == 0:
@@ -399,15 +384,15 @@ class SearchHomeState(AntState):
 class WorldFacade():
     def __init__(self, world):
         self.world = world
-        #self.neighbours_cache = None
 
     def get_neighbours(self, x, y):
         return self.world.get_neighbours(x, y, 1)
 
-    def get_neighbours_as_list(self, x, y):
+    def get_neighbours_as_list(self, x, y, excludeBordersAndObstacles = True):
         neighbours = self.get_neighbours(x, y)
 
-        return [
+        # reorder them according to orientation
+        neighbours = [
             neighbours[1][0],   # north
             neighbours[2][0],   # northeast
             neighbours[2][1],   # east
@@ -418,9 +403,15 @@ class WorldFacade():
             neighbours[0][0]    # northwest
         ]
 
+        if not excludeBordersAndObstacles:
+            return neighbours
+
+        # exclude borders and obstacles
+        return [x for x in neighbours if x != None]
+
     def get_neighbours_by_orientation(self, x, y, orientation):
         orientation = Orientation(orientation)
-        neighbours = self.get_neighbours_as_list(x, y)
+        neighbours = self.get_neighbours_as_list(x, y, False)
 
         straight_left = orientation - 1
         if straight_left < 0:
@@ -430,69 +421,14 @@ class WorldFacade():
         if straight_right > 7:
             straight_right = 0
 
-        return [
+        neighbours = [
             neighbours[straight_left],  # straight left
             neighbours[orientation],    # straight
             neighbours[straight_right]  # straight right
         ]
-    '''
-    def get_neighbours_by_orientation(self, x, y, orientation):
-        orientation = Orientation(orientation)
 
-        if self.neighbours_cache is None:
-            self.world.get_neighbours(x, y)
-
-        if orientation == Orientation.NORTH:
-            neighbours_by_orientation = [
-                self.neighbours_cache[0][0],
-                self.neighbours_cache[1][0],
-                self.neighbours_cache[2][0]
-            ]
-        elif orientation == Orientation.NORTHEAST:
-            neighbours_by_orientation = [
-                self.neighbours_cache[1][0],
-                self.neighbours_cache[2][0],
-                self.neighbours_cache[2][1]
-            ]
-        elif orientation == Orientation.EAST:
-            neighbours_by_orientation = [
-                self.neighbours_cache[2][0],
-                self.neighbours_cache[2][1],
-                self.neighbours_cache[2][2]
-            ]
-        elif orientation == Orientation.SOUTHEAST:
-            neighbours_by_orientation = [
-                self.neighbours_cache[2][1],
-                self.neighbours_cache[2][2],
-                self.neighbours_cache[1][2]
-            ]
-        elif orientation == Orientation.SOUTH:
-            neighbours_by_orientation = [
-                self.neighbours_cache[2][2],
-                self.neighbours_cache[1][2],
-                self.neighbours_cache[0][2]
-            ]
-        elif orientation == Orientation.SOUTHWEST:
-            neighbours_by_orientation = [
-                self.neighbours_cache[1][2],
-                self.neighbours_cache[0][2],
-                self.neighbours_cache[0][1]
-            ]
-        elif orientation == Orientation.WEST:
-            neighbours_by_orientation = [
-                self.neighbours_cache[0][2],
-                self.neighbours_cache[0][1],
-                self.neighbours_cache[0][0]
-            ]
-        elif orientation == Orientation.NORTHWEST:
-            neighbours_by_orientation = [
-                self.neighbours_cache[0][1],
-                self.neighbours_cache[0][0],
-                self.neighbours_cache[1][0]
-            ]
-
-        return neighbours_by_orientation
-    '''
+        # exclude borders and obstacles
+        return [x for x in neighbours if x != None]
 
     def get_food(self, x, y):
         field = self.world.get(x, y)
@@ -515,8 +451,8 @@ class WorldFacade():
     def move_ant(self, source_x, source_y, destination_x, destination_y):
         self.world.move_ant(source_x, source_y, destination_x, destination_y)
 
-    def deposit_pheromone(self, x, y, pheromone_type, pheromone_strength):
+    def deposit_pheromone(self, x, y, pheromone_type):
         if pheromone_type is PheromoneType.HOME:
-            self.world.deposit_pheromone(x, y, pheromone_type, int(pheromone_strength * 0.5))
+            self.world.deposit_pheromone(x, y, pheromone_type, HOME_PHEROMONE_STRENGTH)
         else:
-            self.world.deposit_pheromone(x, y, pheromone_type, int(pheromone_strength * 0.2))
+            self.world.deposit_pheromone(x, y, pheromone_type, FOOD_PHEROMONE_STRENGTH)

@@ -225,12 +225,12 @@ def work():
     stream = getVideoFeed()
     minimunRed = np.array([0,0,96])
     maximumRed = np.array([64,78,255])
-    
+
     minimunGreen = np.array([0,121,0])
     maximumGreen = np.array([191,255,73])
-    
+
     global STARTSIGNALSEND
-    # For recording 
+    # For recording
     #fourcc = cv2.VideoWriter_fourcc(*'XVID')
     #out.write(gameBoardROI)
     #out = cv2.VideoWriter('output.avi',fourcc, 20.0, (960,540))
@@ -293,7 +293,7 @@ def work():
 
             #thres1 = cv2.GaussianBlur(thres1, (11,11), 0)
             #thres2 = cv2.GaussianBlur(thres2, (11,11), 0)
-            
+
             _, s1Contours,_ = cv2.findContours(thres1.copy(),cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
             _, s2Contours,_ = cv2.findContours(thres2.copy(),cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
 
@@ -324,7 +324,7 @@ def work():
                                cv2.circle(startROI1,far,5,[0,0,255],-1)
                             if len(defects) in numDefects:
                                 print("Virtual spacebar" + str(len(defects)))
-                                IR_INPUT.send("[KEY] 32") # Virtual spacebar                                
+                                IR_INPUT.send("[KEY] 32") # Virtual spacebar
                                 STARTSIGNALSEND = True
 
                 if len(s2Contours) > 0:
@@ -362,7 +362,7 @@ def work():
                 print("Game started without correct ROI! Skipping ball detection.")
                 time.sleep(5)
                 continue
-            
+
             if not isResizing:
                 gameBoardROI = cv2.warpPerspective(original,m,(960,540))
 
@@ -372,14 +372,14 @@ def work():
 
             greenMask = cv2.inRange(gameBoardROI, minimunGreen, maximumGreen)
             greenFilter = cv2.bitwise_and(gameBoardROI, gameBoardROI, mask = greenMask)
-            
-            
+
+
             gameBoardROIGray = cv2.cvtColor(redFilter, cv2.COLOR_BGR2GRAY)
             redCircleImage = cv2.GaussianBlur(gameBoardROIGray, (3,3),4)
-            
+
             gameBoardROIGray = cv2.cvtColor(greenFilter, cv2.COLOR_BGR2GRAY)
             greenCircleImage = cv2.GaussianBlur(gameBoardROIGray, (3,3),4)
-            
+
             #gameBoardROIGray = cv2.erode(gameBoardROIGray, (20,20))
             #gameBoardROIGray = cv2.dilate(gameBoardROIGray, (20,20))
             #gameBoardROIGray = cv2.dilate(gameBoardROIGray, (20,20))
@@ -410,7 +410,7 @@ def work():
                     greenBallCenters[-1].append((i[0],i[1]))
 
                 greenBallCenters[-1].append(len(greenCircles))
-                
+
             if SHOW_DEBUG_WINDOWS:
                 cv2.imshow("drawOriginal", drawOriginal)
                 cv2.imshow("gameBoardROI", gameBoardROI)
@@ -418,7 +418,7 @@ def work():
                 cv2.imshow("redFilter", redFilter)
                 cv2.imshow("greenFilter", greenFilter)
 
-            
+
             mergedList = []
             if FPSCounter == FPS-1:
                 if len(redBallCenters) > 0:
@@ -443,7 +443,7 @@ def work():
                     if len(greenBalls) != 0:
                         for x,y in greenBalls:
                             cv2.circle(gameBoardROI,(int(x),int(y)),10,(255,0,0),-1)
-                    
+
                     cv2.imshow("gameBoardROIStatic", gameBoardROI)
 
         if GAME_STATE == GAME_END:
