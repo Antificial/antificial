@@ -51,8 +51,8 @@
         color: 1, 1, 1, 1
     ScatterLayout:
         rotation: -90
-        center_y: 0 + p1_data.height + p1_data.spacing * 2
-        center_x: 0 + (p1_data.height / 2) + p1_data.spacing
+        center_y: 0 + p1_data.height + p1_data.spacing * 2.5
+        center_x: 0 + (p1_data.height / 2) + p1_data.spacing + root.bar_width
         BoxLayout:
             id: p1_data
             orientation: "vertical"
@@ -69,8 +69,8 @@
                 color: 1, 1, 1, 1
     ScatterLayout:
         rotation: 90
-        center_y: root.height - p1_data.height - p1_data.spacing * 2
-        center_x: root.width - (p1_data.height / 2) - p1_data.spacing
+        center_y: root.height - p1_data.height - p1_data.spacing * 2.5
+        center_x: root.width - (p1_data.height / 2) - p1_data.spacing - root.bar_width
         BoxLayout:
             id: p2_data
             orientation: "vertical"

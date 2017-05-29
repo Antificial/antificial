@@ -82,6 +82,7 @@ class SimulationWidget(Widget):
     p2_time_label = ObjectProperty(None)
     p1_score_label = ObjectProperty(None)
     p2_score_label = ObjectProperty(None)
+    bar_width = NumericProperty(20)
 
     def __init__(self, **kwargs):
         super(SimulationWidget, self).__init__(**kwargs)
@@ -95,9 +96,9 @@ class SimulationWidget(Widget):
         self.spacing_y = y / HEIGHT
         self.sides = InstructionGroup()
         self.sides.add(Color(244/255, 77/255, 27/255))
-        self.sides.add(Rectangle(pos=[0,0], size=[10,y]))
+        self.sides.add(Rectangle(pos=[0,0], size=[self.bar_width,y]))
         self.sides.add(Color(28/255, 188/255, 40/255))
-        self.sides.add(Rectangle(pos=[x-10,0], size=[10,y]))
+        self.sides.add(Rectangle(pos=[x-self.bar_width,0], size=[self.bar_width,y]))
         x = 0
         y = -1
         count = 0
@@ -142,9 +143,9 @@ class SimulationWidget(Widget):
             if self.old_window_size_x != x or self.old_window_size_y != y:
                 self.old_window_size_x = x
                 self.old_window_size_y = y
-                self.sides.children[2].size = [10,y]
-                self.sides.children[5].pos = [x-10,0]
-                self.sides.children[5].size = [10,y]
+                self.sides.children[2].size = [self.bar_width,y]
+                self.sides.children[5].pos = [x-self.bar_width,0]
+                self.sides.children[5].size = [self.bar_width,y]
                 for x in range(WIDTH):
                     for y in range(HEIGHT):
                         val = self.cells[x][y]
