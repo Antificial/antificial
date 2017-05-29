@@ -156,7 +156,7 @@ class SimulationWidget(Widget):
             self.spacing_x = x / WIDTH
             self.spacing_y = y / HEIGHT
             R, G, B = 0, 0, 0
-            if GAME_STATE == GAME_RUNNING:
+            if GAME_STATE == GAME_RUNNING and self.p1_ratio > 0:
                 R = interpolate_color_channel(self.p1_color[0], self.p2_color[0], self.p1_ratio)
                 G = interpolate_color_channel(self.p1_color[1], self.p2_color[1], self.p1_ratio)
                 B = interpolate_color_channel(self.p1_color[2], self.p2_color[2], self.p1_ratio)
