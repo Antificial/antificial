@@ -51,8 +51,8 @@
         color: 1, 1, 1, 1
     ScatterLayout:
         rotation: -90
-        center_y: 0 + p1_data.height + p1_data.spacing * 2
-        center_x: 0 + (p1_data.height / 2) + p1_data.spacing
+        center_y: 0 + p1_data.height + p1_data.spacing * 2.5
+        center_x: 0 + (p1_data.height / 2) + p1_data.spacing + root.bar_width
         BoxLayout:
             id: p1_data
             orientation: "vertical"
@@ -69,8 +69,8 @@
                 color: 1, 1, 1, 1
     ScatterLayout:
         rotation: 90
-        center_y: root.height - p1_data.height - p1_data.spacing * 2
-        center_x: root.width - (p1_data.height / 2) - p1_data.spacing
+        center_y: root.height - p1_data.height - p1_data.spacing * 2.5
+        center_x: root.width - (p1_data.height / 2) - p1_data.spacing - root.bar_width
         BoxLayout:
             id: p2_data
             orientation: "vertical"
@@ -87,6 +87,7 @@
                 color: 1, 1, 1, 1
 
 <EndWidget>:
+    winner_image: winner_image
     canvas.before:
         Color:
             rgba: self.color_1
@@ -98,6 +99,15 @@
         Rectangle:
             pos: root.width / 2, 0
             size: root.width / 2, root.height
+    ScatterLayout:
+        rotation: root.winner_rotation
+        center_x: root.winner_pos[0]
+        center_y: root.winner_pos[1]
+        size: root.width * root.scale, root.width * root.scale
+        Image:
+            id: winner_image
+            anim_delay: .01
+            anim_loop: 1
 
 <MenuWidget>:
     btn_quit: btn_quit
@@ -173,7 +183,7 @@
                 min: 0
                 max: 100
                 step: 1
-                value: 1
+                value: 2
                 value_track: True
         GridLayout:
             cols: 1
@@ -194,7 +204,7 @@
                 min: 0
                 max: 100
                 step: 1
-                value: 4
+                value: 3
                 value_track: True
         GridLayout:
             cols: 1
