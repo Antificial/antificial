@@ -7,7 +7,7 @@ from random import randint
 # TODO: replace this with push through queue?
 from framework import handler
 
-PROJECTOR_MODE = True
+PROJECTOR_MODE = False
 
 from kivy.config import Config
 Config.set("kivy", "log_level", "warning") # one of: trace, debug, info, warning, error, critical
@@ -93,6 +93,11 @@ class SimulationWidget(Widget):
         x, y = Window.size
         self.spacing_x = x / WIDTH
         self.spacing_y = y / HEIGHT
+        self.sides = InstructionGroup()
+        self.sides.add(Color(244/255, 77/255, 27/255))
+        self.sides.add(Rectangle(pos=[0,0], size=[10,y]))
+        self.sides.add(Color(28/255, 188/255, 40/255))
+        self.sides.add(Rectangle(pos=[x-10,0], size=[10,y]))
         x = 0
         y = -1
         count = 0
@@ -108,6 +113,7 @@ class SimulationWidget(Widget):
             g.add(Rectangle(pos=(x * self.spacing_x, y_inverted * self.spacing_y), size=(self.spacing_x, self.spacing_y)))
             self.ids["grid_layout"].canvas.add(g)
             self.cells[x][y_inverted] = g
+        self.ids["grid_layout"].canvas.add(self.sides)
 
     def update_data(self, dt):
         global DEBUG, TIME, SCORE, GAME_DURATION
@@ -117,19 +123,15 @@ class SimulationWidget(Widget):
             seconds_to_display = GAME_DURATION - TIME
             if seconds_to_display < 0:
                 seconds_to_display = 0
-        if DEBUG and GAME_STATE == GAME_RUNNING:
-            self.fps.text = "%d FPS : RES: (%d, %d)" % (round(Clock.get_fps()), x, y)
             display_time = str(datetime.timedelta(seconds=seconds_to_display))
             self.p1_time_label.text = display_time
             self.p1_score_label.text = "Score: %04d" % SCORES[0]
             self.p2_time_label.text = display_time
             self.p2_score_label.text = "Score: %04d" % SCORES[1]
+        if DEBUG and GAME_STATE == GAME_RUNNING:
+            self.fps.text = "%d FPS : RES: (%d, %d)" % (round(Clock.get_fps()), x, y)
         else:
             self.fps.text = ""
-            self.p1_time_label.text = ""
-            self.p1_score_label.text = ""
-            self.p2_time_label.text = ""
-            self.p2_score_label.text = ""
 
     def update(self, dt):
         global BLACK, WHITE, RED, GREEN, BLUE, GRAY
@@ -140,6 +142,9 @@ class SimulationWidget(Widget):
             if self.old_window_size_x != x or self.old_window_size_y != y:
                 self.old_window_size_x = x
                 self.old_window_size_y = y
+                self.sides.children[2].size = [10,y]
+                self.sides.children[5].pos = [x-10,0]
+                self.sides.children[5].size = [10,y]
                 for x in range(WIDTH):
                     for y in range(HEIGHT):
                         val = self.cells[x][y]
@@ -360,7 +365,7 @@ sm = ScreenManager()
 SCREEN_LIST = [SplashScreen(name="splash"), StartScreen(name="start"), SimulationScreen(name="simulation"), EndScreen(name="end"), MenuScreen(name="menu")]
 for screen in SCREEN_LIST:
     sm.add_widget(screen)
-DEBUG = True
+DEBUG = False
 
 class AntificialApp(App):
     def __init__(self, fw_output, ir_cc_queue, fw_cc_queue, world_data, grid_resolution, player_count, grid_size):

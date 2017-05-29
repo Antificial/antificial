@@ -51,38 +51,38 @@
         color: 1, 1, 1, 1
     ScatterLayout:
         rotation: -90
-        center_y: root.height / 2
+        center_y: 0 + p1_data.height + p1_data.spacing * 2
         center_x: 0 + (p1_data.height / 2) + p1_data.spacing
         BoxLayout:
             id: p1_data
             orientation: "vertical"
-            spacing: 40
+            spacing: 10
             Label:
                 id: p1_time_label
-                font_size: 70
+                font_size: 45
                 text: "00:00:00"
                 color: 1, 1, 1, 1
             Label:
                 id: p1_score_label
-                font_size: 70
+                font_size: 45
                 text: "Score: 000"
                 color: 1, 1, 1, 1
     ScatterLayout:
         rotation: 90
-        center_y: root.height / 2
+        center_y: root.height - p1_data.height - p1_data.spacing * 2
         center_x: root.width - (p1_data.height / 2) - p1_data.spacing
         BoxLayout:
             id: p2_data
             orientation: "vertical"
-            spacing: 40
+            spacing: 0
             Label:
                 id: p2_time_label
-                font_size: 70
+                font_size: 45
                 text: "00:00:00"
                 color: 1, 1, 1, 1
             Label:
                 id: p2_score_label
-                font_size: 70
+                font_size: 45
                 text: "Score: 000"
                 color: 1, 1, 1, 1
 
