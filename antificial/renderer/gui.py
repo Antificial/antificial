@@ -83,6 +83,12 @@ class SimulationWidget(Widget):
     p1_score_label = ObjectProperty(None)
     p2_score_label = ObjectProperty(None)
     bar_width = NumericProperty(20)
+    p1_ratio = NumericProperty(0)
+    p2_ratio = NumericProperty(0)
+    meter_width = NumericProperty(0)
+    meter_height = NumericProperty(20)
+    p1_color = [244/255, 77/255, 27/255]
+    p2_color = [28/255, 188/255, 40/255]
 
     def __init__(self, **kwargs):
         super(SimulationWidget, self).__init__(**kwargs)
@@ -94,10 +100,14 @@ class SimulationWidget(Widget):
         x, y = Window.size
         self.spacing_x = x / WIDTH
         self.spacing_y = y / HEIGHT
+        self.meter_width = x / 2
+        self.meter = InstructionGroup()
+        self.meter.add(Color(1,1,1))
+        self.meter.add(Rectangle(pos=[x/2,y - self.meter_height], size=[self.meter_height,self.meter_height]))
         self.sides = InstructionGroup()
-        self.sides.add(Color(244/255, 77/255, 27/255))
+        self.sides.add(Color(rgb=self.p1_color))
         self.sides.add(Rectangle(pos=[0,0], size=[self.bar_width,y]))
-        self.sides.add(Color(28/255, 188/255, 40/255))
+        self.sides.add(Color(rgb=self.p2_color))
         self.sides.add(Rectangle(pos=[x-self.bar_width,0], size=[self.bar_width,y]))
         x = 0
         y = -1
@@ -109,12 +119,12 @@ class SimulationWidget(Widget):
                 y += 1
             y_inverted = HEIGHT - y - 1
             g = InstructionGroup()
-            #g.add(Color(1, 1, 1, 1)) # white
             g.add(Color(0, 0, 0, 1)) # black
             g.add(Rectangle(pos=(x * self.spacing_x, y_inverted * self.spacing_y), size=(self.spacing_x, self.spacing_y)))
             self.ids["grid_layout"].canvas.add(g)
             self.cells[x][y_inverted] = g
         self.ids["grid_layout"].canvas.add(self.sides)
+        self.ids["grid_layout"].canvas.add(self.meter)
 
     def update_data(self, dt):
         global DEBUG, TIME, SCORE, GAME_DURATION
@@ -136,10 +146,22 @@ class SimulationWidget(Widget):
 
     def update(self, dt):
         global BLACK, WHITE, RED, GREEN, BLUE, GRAY
+        def interpolate_color_channel(c1, c2, ratio):
+            return c2 + ratio * (c1 - c2)
+        maximum = SCORES[0] + SCORES[1] + 1
+        self.p1_ratio = SCORES[0] / maximum
+        self.p2_ratio = SCORES[1] / maximum
         with self.canvas:
             x, y = Window.size
             self.spacing_x = x / WIDTH
             self.spacing_y = y / HEIGHT
+            R, G, B = 0, 0, 0
+            if GAME_STATE == GAME_RUNNING:
+                R = interpolate_color_channel(self.p1_color[0], self.p2_color[0], self.p1_ratio)
+                G = interpolate_color_channel(self.p1_color[1], self.p2_color[1], self.p1_ratio)
+                B = interpolate_color_channel(self.p1_color[2], self.p2_color[2], self.p1_ratio)
+                self.meter.children[0].rgb = [R,G,B]
+                self.meter.children[2].pos = [(x / 2 - self.meter_width / 2) + (x / 2) - self.meter_width * self.p1_ratio, y - self.meter_height]
             if self.old_window_size_x != x or self.old_window_size_y != y:
                 self.old_window_size_x = x
                 self.old_window_size_y = y
