@@ -240,8 +240,8 @@ def work():
 
         if DEBUG_BALLS_ONLY:
             debug_ball_coordinates = []
-            debug_ball_coordinates = add_debug_ball(debug_ball_coordinates, 50, 40, 0)
-            debug_ball_coordinates = add_debug_ball(debug_ball_coordinates, 90, 10, 0)
+            debug_ball_coordinates = add_debug_ball(debug_ball_coordinates, 50, 60, 0)
+            # debug_ball_coordinates = add_debug_ball(debug_ball_coordinates, 90, 10, 0)
             debug_ball_coordinates = add_debug_ball(debug_ball_coordinates, 70, 60, 1)
             IR_INPUT.send(debug_ball_coordinates)
             cv2.destroyAllWindows()

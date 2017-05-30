@@ -249,22 +249,26 @@ class EndWidget(Widget):
     def __init__(self, **kwargs):
         super(EndWidget, self).__init__(**kwargs)
         self.winner_image.source = os.path.join(ROOT_PATH, "winner.zip")
+        self.winner_image.color = [0,0,0,0]
 
     def update(self):
+        x, y = Window.size
         if SCORES[0] > SCORES[1]:
             self.winner_image.reload()
             self.winner_rotation = -90
-            self.winner_pos = [self.width/4, self.height/2]
+            self.winner_image.color = [1,1,1,1]
+            self.winner_pos = [x/4, y/2]
             self.color_1 = self.color_win
             self.color_2 = self.color_lose
         elif SCORES[0] < SCORES[1]:
             self.winner_image.reload()
             self.winner_rotation = 90
-            self.winner_pos = [self.width/4+self.width/2, self.height/2]
+            self.winner_image.color = [1,1,1,1]
+            self.winner_pos = [(x/4)*3, y/2]
             self.color_1 = self.color_lose
             self.color_2 = self.color_win
         else:
-            self.winner_image.source = ""
+            self.winner_image.color = [0,0,0,0]
             self.color_1.rgb = [0.5, 0.5, 0.5]
             self.color_2.rgb = [0.5, 0.5, 0.5]
 
