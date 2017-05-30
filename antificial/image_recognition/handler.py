@@ -23,12 +23,12 @@ SHOW_DEBUG_WINDOWS = True
 DEBUG_BALLS_ONLY = False
 
 class Settings(object):
-    DP = 3
+    DP = 2
     MinDistance = 22
     CannyValue = 30
-    Threshold = 40
-    MinRadius = 12
-    MaxRadius = 19
+    Threshold = 50
+    MinRadius = 13
+    MaxRadius = 17
 
     def get(self):
         return self.DP, self.MinDistance, self.CannyValue, self.Threshold, self.MinRadius, self.MaxRadius
@@ -188,12 +188,12 @@ def init():
 
     if SHOW_DEBUG_WINDOWS:
         cv2.namedWindow("settings")
-        cv2.createTrackbar("DP", "settings", 3, 5, SETTINGS.updateDP)
+        cv2.createTrackbar("DP", "settings", 2, 5, SETTINGS.updateDP)
         cv2.createTrackbar("mindist", "settings", 22, 100, SETTINGS.updateMinDistance)
         cv2.createTrackbar("cannyValue", "settings", 30, 250, SETTINGS.updateCannyValue)
-        cv2.createTrackbar("threshold", "settings", 40, 75, SETTINGS.updateThreshold)
-        cv2.createTrackbar("minR", "settings", 12, 100, SETTINGS.updateMinRadius)
-        cv2.createTrackbar("maxR", "settings", 19, 100, SETTINGS.updateMaxRadius)
+        cv2.createTrackbar("threshold", "settings", 50, 75, SETTINGS.updateThreshold)
+        cv2.createTrackbar("minR", "settings", 13, 100, SETTINGS.updateMinRadius)
+        cv2.createTrackbar("maxR", "settings", 17, 100, SETTINGS.updateMaxRadius)
 
 def getVideoFeed(src=0):
     stream = cv2.VideoCapture(src)
@@ -217,7 +217,7 @@ def work():
     isResizing = True
     m = False
     prevContour = None
-    FPS = 20.
+    FPS = 15.
     FPSCounter = 0
     stableBoundariesC = 0
     redBallCenters = []
@@ -226,8 +226,8 @@ def work():
     minimunRed = np.array([0,0,96])
     maximumRed = np.array([64,78,255])
 
-    minimunGreen = np.array([0,121,0])
-    maximumGreen = np.array([191,255,73])
+    minimunGreen = np.array([59,75,0])
+    maximumGreen = np.array([132,255,75])
 
     global STARTSIGNALSEND
     # For recording
@@ -354,10 +354,11 @@ def work():
                 cv2.imshow("thres2", thres2)
                 cv2.imshow("gameBoardROI", gameBoardROI)
 
-            time.sleep(0.5) # let's not waste too much cpu time, relax for a bit
+            time.sleep(0.2) # let's not waste too much cpu time, relax for a bit
             begin = time.time()
 
         if GAME_STATE == GAME_RUNNING:
+            
             if gameBoardROI is None:
                 print("Game started without correct ROI! Skipping ball detection.")
                 time.sleep(5)
@@ -375,16 +376,16 @@ def work():
 
 
             gameBoardROIGray = cv2.cvtColor(redFilter, cv2.COLOR_BGR2GRAY)
-            redCircleImage = cv2.GaussianBlur(gameBoardROIGray, (3,3),4)
+            redCircleImage = cv2.GaussianBlur(gameBoardROIGray, (5,5),4)
 
             gameBoardROIGray = cv2.cvtColor(greenFilter, cv2.COLOR_BGR2GRAY)
-            greenCircleImage = cv2.GaussianBlur(gameBoardROIGray, (3,3),4)
+            greenCircleImage = cv2.GaussianBlur(gameBoardROIGray, (5,5),4)
 
             #gameBoardROIGray = cv2.erode(gameBoardROIGray, (20,20))
             #gameBoardROIGray = cv2.dilate(gameBoardROIGray, (20,20))
             #gameBoardROIGray = cv2.dilate(gameBoardROIGray, (20,20))
             #gameBoardROIGray = cv2.erode(gameBoardROIGray, (20,20))
-            #gameBoardROIGray = cv2.Canny(gameBoardROIGray, 60,80, apertureSize = 3)
+            gameBoardROIGray = cv2.Canny(gameBoardROIGray, 60,80, apertureSize = 3)
             #gameBoardROIGray = cv2.GaussianBlur(gameBoardROIGray, (7,7),0)
 
             dpValue, minDist, cannyValue, threshold, minR, maxR = SETTINGS.get()
@@ -420,17 +421,20 @@ def work():
 
 
             mergedList = []
+            redBalls = []
+            greenBalls = []
             if FPSCounter == FPS-1:
                 if len(redBallCenters) > 0:
                     redBalls = processData(redBallCenters)
                     redBallCoordinates = convertToGameWorldCoordinates(redBalls, 0)
                     mergedList += redBallCoordinates
+                else:
+                    redBalls = []
                 if len(greenBallCenters) > 0:
                     greenBalls = processData(greenBallCenters)
                     greenBallCoordinates = convertToGameWorldCoordinates(greenBalls, 1)
                     mergedList += greenBallCoordinates
                 else:
-                    redBalls = []
                     greenBalls = []
                 IR_INPUT.send(mergedList)
                 redBallCenters = []
