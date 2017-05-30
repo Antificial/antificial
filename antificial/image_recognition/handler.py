@@ -25,8 +25,8 @@ DEBUG_BALLS_ONLY = False
 class Settings(object):
     DP = 2
     MinDistance = 22
-    CannyValue = 30
-    Threshold = 50
+    CannyValue = 66
+    Threshold = 14
     MinRadius = 13
     MaxRadius = 17
 
@@ -190,8 +190,8 @@ def init():
         cv2.namedWindow("settings")
         cv2.createTrackbar("DP", "settings", 2, 5, SETTINGS.updateDP)
         cv2.createTrackbar("mindist", "settings", 22, 100, SETTINGS.updateMinDistance)
-        cv2.createTrackbar("cannyValue", "settings", 30, 250, SETTINGS.updateCannyValue)
-        cv2.createTrackbar("threshold", "settings", 50, 75, SETTINGS.updateThreshold)
+        cv2.createTrackbar("cannyValue", "settings", 66, 250, SETTINGS.updateCannyValue)
+        cv2.createTrackbar("threshold", "settings", 14, 75, SETTINGS.updateThreshold)
         cv2.createTrackbar("minR", "settings", 13, 100, SETTINGS.updateMinRadius)
         cv2.createTrackbar("maxR", "settings", 17, 100, SETTINGS.updateMaxRadius)
 
