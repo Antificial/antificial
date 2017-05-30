@@ -34,6 +34,8 @@
     p2_time_label: p2_time_label
     p2_score_label: p2_score_label
     fps: fps_label
+    meter_indicator: meter_indicator
+    meter_backdrop: meter_backdrop
     ScatterLayout:
         id: grid_layout
         canvas.before:
@@ -51,7 +53,8 @@
         color: 1, 1, 1, 1
     ScatterLayout:
         rotation: -90
-        center_y: 0 + p1_data.height + p1_data.spacing * 2.5
+        # center_y: 0 + p1_data.height + p1_data.spacing * 2.5
+        center_y: root.height / 2
         center_x: 0 + (p1_data.height / 2) + p1_data.spacing + root.bar_width
         BoxLayout:
             id: p1_data
@@ -69,7 +72,8 @@
                 color: 1, 1, 1, 1
     ScatterLayout:
         rotation: 90
-        center_y: root.height - p1_data.height - p1_data.spacing * 2.5
+        # center_y: root.height - p1_data.height - p1_data.spacing * 2.5
+        center_y: root.height / 2
         center_x: root.width - (p1_data.height / 2) - p1_data.spacing - root.bar_width
         BoxLayout:
             id: p2_data
@@ -85,6 +89,10 @@
                 font_size: 45
                 text: "Score: 000"
                 color: 1, 1, 1, 1
+    Image:
+        id: meter_indicator
+    Image:
+        id: meter_backdrop
 
 <EndWidget>:
     winner_image: winner_image

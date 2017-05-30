@@ -37,10 +37,15 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.label import Label
 from kivy.uix.slider import Slider
 from kivy.properties import ObjectProperty, StringProperty, NumericProperty, ListProperty
-from kivy.graphics.vertex_instructions import Line, Rectangle
+from kivy.graphics.vertex_instructions import Line, Rectangle, RoundedRectangle
 from kivy.graphics import Color, InstructionGroup
 from kivy.clock import Clock
 from kivy.vector import Vector
+
+def interpolate_color(c1, c2, ratio):
+    def intr_clr_ch(c1, c2, ratio):
+        return c2 + ratio * (c1 - c2)
+    return [intr_clr_ch(c1[0], c2[0], ratio),intr_clr_ch(c1[1], c2[1], ratio),intr_clr_ch(c1[2], c2[2], ratio), 1.0]
 
 class SplashWidget(Widget):
     title = ObjectProperty(None)
@@ -86,14 +91,14 @@ class SimulationWidget(Widget):
     p1_ratio = NumericProperty(0)
     p2_ratio = NumericProperty(0)
     meter_width = NumericProperty(0)
-    meter_height = NumericProperty(20)
+    meter_height = NumericProperty(100)
     p1_color = [244/255, 77/255, 27/255]
     p2_color = [28/255, 188/255, 40/255]
+    meter_indicator = ObjectProperty(None)
+    meter_backdrop = ObjectProperty(None)
 
     def __init__(self, **kwargs):
         super(SimulationWidget, self).__init__(**kwargs)
-        # self.grid_x = []
-        # self.grid_y = []
         self.old_window_size_x = 0
         self.old_window_size_y = 0
         self.cells = [[0 for y in range(HEIGHT)] for x in range(WIDTH+1)]
@@ -101,9 +106,16 @@ class SimulationWidget(Widget):
         self.spacing_x = x / WIDTH
         self.spacing_y = y / HEIGHT
         self.meter_width = x / 2
-        self.meter = InstructionGroup()
-        self.meter.add(Color(1,1,1))
-        self.meter.add(Rectangle(pos=[x/2,y - self.meter_height], size=[self.meter_height,self.meter_height]))
+        self.meter_bar = InstructionGroup()
+        self.meter_bar.add(Color(1,1,1))
+        self.meter_bar.add(RoundedRectangle(pos=[x / 2 - self.meter_width / 2,y - self.meter_height * 0.9], size=[self.meter_width,self.meter_height / 3]))
+        self.meter_indicator.source = os.path.join(ROOT_PATH, "indicator.png")
+        self.meter_backdrop.source = os.path.join(ROOT_PATH, "indicator_backdrop.png")
+        self.meter_backdrop.pos = [x / 2 - self.meter_backdrop.size[0] / 2,y - self.meter_height * 1.2]
+        self.meter_indicator.pos = [x / 2 - self.meter_indicator.size[0] / 2,y - self.meter_height * 1.2]
+        self.meter_backdrop.size = [self.meter_height,self.meter_height]
+        self.meter_indicator.size = [self.meter_height,self.meter_height]
+        self.meter_backdrop.color = interpolate_color(self.p1_color, self.p2_color, 0.5)
         self.sides = InstructionGroup()
         self.sides.add(Color(rgb=self.p1_color))
         self.sides.add(Rectangle(pos=[0,0], size=[self.bar_width,y]))
@@ -124,7 +136,7 @@ class SimulationWidget(Widget):
             self.ids["grid_layout"].canvas.add(g)
             self.cells[x][y_inverted] = g
         self.ids["grid_layout"].canvas.add(self.sides)
-        self.ids["grid_layout"].canvas.add(self.meter)
+        self.ids["grid_layout"].canvas.add(self.meter_bar)
 
     def update_data(self, dt):
         global DEBUG, TIME, SCORE, GAME_DURATION
@@ -146,40 +158,35 @@ class SimulationWidget(Widget):
 
     def update(self, dt):
         global BLACK, WHITE, RED, GREEN, BLUE, GRAY
-        def interpolate_color_channel(c1, c2, ratio):
-            return c2 + ratio * (c1 - c2)
         maximum = SCORES[0] + SCORES[1] + 1
-        self.p1_ratio = SCORES[0] / maximum
-        self.p2_ratio = SCORES[1] / maximum
+        self.ratio = SCORES[0] / maximum
         with self.canvas:
             x, y = Window.size
             self.spacing_x = x / WIDTH
             self.spacing_y = y / HEIGHT
             R, G, B = 0, 0, 0
-            if GAME_STATE == GAME_RUNNING and self.p1_ratio > 0:
-                R = interpolate_color_channel(self.p1_color[0], self.p2_color[0], self.p1_ratio)
-                G = interpolate_color_channel(self.p1_color[1], self.p2_color[1], self.p1_ratio)
-                B = interpolate_color_channel(self.p1_color[2], self.p2_color[2], self.p1_ratio)
-                self.meter.children[0].rgb = [R,G,B]
-                self.meter.children[2].pos = [(x / 2 - self.meter_width / 2) + (x / 2) - self.meter_width * self.p1_ratio, y - self.meter_height]
+            if GAME_STATE == GAME_RUNNING and self.ratio > 0:
+                self.meter_backdrop.color = interpolate_color(self.p1_color, self.p2_color, self.ratio)
+                self.meter_backdrop.pos = [(x / 2 - self.meter_width / 2) + (x / 2) - self.meter_width * self.ratio - self.meter_backdrop.size[0] / 2, y - self.meter_height * 1.2]
+                self.meter_indicator.pos = [(x / 2 - self.meter_width / 2) + (x / 2) - self.meter_width * self.ratio - self.meter_indicator.size[0] / 2, y - self.meter_height * 1.2]
             if self.old_window_size_x != x or self.old_window_size_y != y:
                 self.old_window_size_x = x
                 self.old_window_size_y = y
                 self.sides.children[2].size = [self.bar_width,y]
                 self.sides.children[5].pos = [x-self.bar_width,0]
                 self.sides.children[5].size = [self.bar_width,y]
+                self.meter_width = x / 2
+                self.meter_backdrop.pos = [x / 2 - self.meter_backdrop.size[0] / 2,y - self.meter_height * 1.2]
+                self.meter_indicator.pos = [x / 2 - self.meter_indicator.size[0] / 2,y - self.meter_height * 1.2]
+                self.meter_backdrop.color = interpolate_color(self.p1_color, self.p2_color, 0.5)
+                self.meter_bar.children[2].pos = [x / 2 - self.meter_width / 2,y - self.meter_height * 0.9]
+                self.meter_bar.children[2].size = [self.meter_width,self.meter_height / 3]
                 for x in range(WIDTH):
                     for y in range(HEIGHT):
                         val = self.cells[x][y]
                         if val != 0:
                             val.children[2].pos = (x * self.spacing_x, y * self.spacing_y)
                             val.children[2].size = (self.spacing_x, self.spacing_y)
-                # self.grid_x = []
-                # self.grid_y = []
-                # for i in range(0, WIDTH):
-                #    self.grid_x.append(Line(points=[i*self.spacing_x, 0, i*self.spacing_x, y], width=1))
-                # for j in range(0, HEIGHT):
-                #    self.grid_y.append(Line(points=[0, j*self.spacing_y, x, j*self.spacing_y], width=1))
             x = 0
             y = -1
             count = 0
