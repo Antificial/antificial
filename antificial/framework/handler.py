@@ -143,11 +143,12 @@ def app_loop():
             game_loop()
             GAME_STATE = GAME_END
         if GAME_STATE == GAME_END and RUNNING:
-            WORLD.reset()
             print("[FW] Game State is %d" % GAME_STATE)
             FW_INPUT.send("[GAME_STATE] %d" % GAME_STATE)
             IR_CC_QUEUE.put("[GAME_STATE] %d" % GAME_STATE)
-            time.sleep(10)
+            time.sleep(5)
+            WORLD.reset()
+            time.sleep(5)
             GAME_STATE = GAME_BEGIN
 
 # Run this from other code

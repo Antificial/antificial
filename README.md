@@ -3,10 +3,10 @@ Antificial
 **Antificial** is a real-time swarm simulation framework with real-time user interaction.
 
 #### Screenshot
-![Description](https://github.com/Antificial/antificial/blob/master/title.png "Description")
+![Demo Screenshot](https://github.com/Antificial/antificial/blob/master/demo.png "Demo Screenshot")
 
 ## Download
-* [Version 0.1](https://github.com/Antificial/antificial/archive/master.zip)
+* [Master Version](https://github.com/Antificial/antificial/archive/master.zip)
 
 ## Usage
 It is recommended to use [virtualenv](https://pypi.python.org/pypi/virtualenv) with this project.
@@ -37,7 +37,7 @@ $ python main.py
 * see [LICENSE](https://github.com/Antificial/antificial/blob/master/LICENSE) file
 
 ## Version
-* Version 0.1
+* Version 1.0
 
 ## How to use this code
 * see [USAGE](https://github.com/Antificial/antificial/blob/master/USAGE.md) file
