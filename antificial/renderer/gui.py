@@ -99,6 +99,7 @@ class SimulationWidget(Widget):
 
     def __init__(self, **kwargs):
         super(SimulationWidget, self).__init__(**kwargs)
+        self.nest_radius = 3
         self.old_window_size_x = 0
         self.old_window_size_y = 0
         self.cells = [[0 for y in range(HEIGHT)] for x in range(WIDTH+1)]
@@ -190,6 +191,7 @@ class SimulationWidget(Widget):
             x = 0
             y = -1
             count = 0
+            nest_coordinates = (0, 0)
             for i in range(0, len(WORLD_DATA), INTS_PER_FIELD):
                 x = (i - (count * INTS_PER_FIELD) + count) % WIDTH
                 count += 1
@@ -198,43 +200,49 @@ class SimulationWidget(Widget):
                 y_inverted = HEIGHT - y - 1
 
                 is_nest = WORLD_DATA[i] > 0
+                if is_nest:
+                    nest_coordinates = (x, y_inverted)
                 ant_count = WORLD_DATA[i + 1]
                 home_pheromone_level = WORLD_DATA[i + 2]
                 food_pheromone_level = WORLD_DATA[i + 3]
 
-                #self.cells[x][y_inverted].children[0].rgb = [1, 1, 1]
                 self.cells[x][y_inverted].children[0].rgb = [0, 0, 0]
 
-                if is_nest:
-                    self.cells[x][y_inverted].children[0].rgb = [0.5, 0.5, 0.5]
-                else:
-                    has_food = False
-                    for player_index in range(PLAYER_COUNT):
-                        if WORLD_DATA[i + 4 + player_index] > 0:
-                            has_food = True
-                            break
-                    if not has_food:
-                        display_home_pheromone = SHOW_HOME_PHEROMONES and home_pheromone_level > 0
-                        display_food_pheromone = SHOW_FOOD_PHEROMONES and food_pheromone_level > 0
-                        if display_home_pheromone and display_food_pheromone:
-                            alpha = (((food_pheromone_level / 255) + (home_pheromone_level / 255)) / 2)
-                            self.cells[x][y_inverted].children[0].rgba = [0, 1, 1, alpha]
-                        elif display_home_pheromone:
-                            self.cells[x][y_inverted].children[0].rgba = [0, 0, 1, home_pheromone_level / 255 * ALPHA_DAMPEN]
-                        elif display_food_pheromone:
-                            self.cells[x][y_inverted].children[0].rgba = [0, 1, 0, food_pheromone_level / 255 * ALPHA_DAMPEN]
-                    if ant_count > 0:
-                        self.cells[x][y_inverted].children[0].rgb = [1, 1, 1]
-                    for player_index in range(PLAYER_COUNT):
-                        food_level = WORLD_DATA[i + 4 + player_index]
-                        if food_level > 0:
-                            has_food = True
-                            if player_index == 0:
-                                self.cells[x][y_inverted].children[0].rgba = [1, 0, 0, food_level / 255]
-                            elif player_index == 1:
-                                self.cells[x][y_inverted].children[0].rgba = [0, 1, 0, food_level / 255]
-                            else:
-                                self.cells[x][y_inverted].children[0].rgba = [0, 0, 1, food_level / 255]
+                has_food = False
+                for player_index in range(PLAYER_COUNT):
+                    if WORLD_DATA[i + 4 + player_index] > 0:
+                        has_food = True
+                        break
+                if not has_food:
+                    display_home_pheromone = SHOW_HOME_PHEROMONES and home_pheromone_level > 0
+                    display_food_pheromone = SHOW_FOOD_PHEROMONES and food_pheromone_level > 0
+                    if display_home_pheromone and display_food_pheromone:
+                        alpha = (((food_pheromone_level / 255) + (home_pheromone_level / 255)) / 2)
+                        self.cells[x][y_inverted].children[0].rgba = [0, 1, 1, alpha]
+                    elif display_home_pheromone:
+                        self.cells[x][y_inverted].children[0].rgba = [0, 0, 1, home_pheromone_level / 255 * ALPHA_DAMPEN]
+                    elif display_food_pheromone:
+                        self.cells[x][y_inverted].children[0].rgba = [0, 1, 0, food_pheromone_level / 255 * ALPHA_DAMPEN]
+                if ant_count > 0:
+                    self.cells[x][y_inverted].children[0].rgb = [1, 1, 1]
+                for player_index in range(PLAYER_COUNT):
+                    food_level = WORLD_DATA[i + 4 + player_index]
+                    if food_level > 0:
+                        has_food = True
+                        if player_index == 0:
+                            self.cells[x][y_inverted].children[0].rgba = [1, 0, 0, food_level / 255]
+                        elif player_index == 1:
+                            self.cells[x][y_inverted].children[0].rgba = [0, 1, 0, food_level / 255]
+                        else:
+                            self.cells[x][y_inverted].children[0].rgba = [0, 0, 1, food_level / 255]
+            nest_x = nest_coordinates[0]
+            nest_y = nest_coordinates[1]
+            if nest_coordinates != (0,0):
+                self.cells[nest_x][nest_y].children[0].rgb = [0.5, 0.5, 0.5]
+                half_nest_radius = math.ceil(self.nest_radius / 2)
+                for radius_x in range(nest_x-half_nest_radius, nest_x+half_nest_radius):
+                    for radius_y in range(nest_y-half_nest_radius, nest_y+half_nest_radius):
+                        self.cells[radius_x][radius_y].children[0].rgb = [237/255, 217/255, 2/255]
 
 class EndWidget(Widget):
     color_win = ListProperty([28/255,188/255,40/255,0.75])
