@@ -217,17 +217,22 @@ def work():
     isResizing = True
     m = False
     prevContour = None
-    FPS = 15.
+    FPS = 20.
     FPSCounter = 0
     stableBoundariesC = 0
     redBallCenters = []
     greenBallCenters = []
     stream = getVideoFeed()
-    minimunRed = np.array([0,0,96])
-    maximumRed = np.array([64,78,255])
-
-    minimunGreen = np.array([59,75,0])
-    maximumGreen = np.array([132,255,75])
+    numDefects = {6}
+    minimunRedHSV = np.array([0,200,78])
+    maximumRedHSV = np.array([255,255,255])
+    minimunGreenHSV = np.array([30,61,39])
+    maximumGreenHSV = np.array([95,182,191])
+    
+    minimunRedBGR = np.array([0,0,96])
+    maximumRedBGR = np.array([64,78,255])
+    minimunGreenBGR = np.array([59,75,0])
+    maximumGreenBGR = np.array([132,255,75])
 
     global STARTSIGNALSEND
     # For recording
@@ -304,7 +309,7 @@ def work():
             cv2.drawContours(startROI2, s2Contours, -1, (0,0,255))
 
 
-            numDefects = {6}
+            
 
             if not STARTSIGNALSEND:
                 if len(s1Contours) > 0:
@@ -367,11 +372,12 @@ def work():
             if not isResizing:
                 gameBoardROI = cv2.warpPerspective(original,m,(960,540))
 
-
-            redMask = cv2.inRange(gameBoardROI, minimunRed, maximumRed)
+            gameBoardROI = cv2.cvtColor(gameBoardROI, cv2.COLOR_BGR2HSV)
+            
+            redMask = cv2.inRange(gameBoardROI, minimunRedHSV, maximumRedHSV)
             redFilter = cv2.bitwise_and(gameBoardROI, gameBoardROI, mask = redMask)
 
-            greenMask = cv2.inRange(gameBoardROI, minimunGreen, maximumGreen)
+            greenMask = cv2.inRange(gameBoardROI, minimunGreenHSV, maximumGreenHSV)
             greenFilter = cv2.bitwise_and(gameBoardROI, gameBoardROI, mask = greenMask)
 
 
@@ -386,7 +392,7 @@ def work():
             #gameBoardROIGray = cv2.dilate(gameBoardROIGray, (20,20))
             #gameBoardROIGray = cv2.erode(gameBoardROIGray, (20,20))
             gameBoardROIGray = cv2.Canny(gameBoardROIGray, 60,80, apertureSize = 3)
-            #gameBoardROIGray = cv2.GaussianBlur(gameBoardROIGray, (7,7),0)
+            gameBoardROIGray = cv2.GaussianBlur(gameBoardROIGray, (3,3),0)
 
             dpValue, minDist, cannyValue, threshold, minR, maxR = SETTINGS.get()
             redCircles = cv2.HoughCircles(redCircleImage, cv2.HOUGH_GRADIENT, dpValue, minDist, param1 = cannyValue, param2 = threshold, minRadius = minR, maxRadius = maxR)
