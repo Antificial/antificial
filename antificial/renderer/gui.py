@@ -157,37 +157,43 @@ class SimulationWidget(Widget):
         else:
             self.fps.text = ""
 
-    def update(self, dt):
-        global BLACK, WHITE, RED, GREEN, BLUE, GRAY
+    def update_ratio(self):
+        x, y = Window.size
         maximum = SCORES[0] + SCORES[1] + 1
         self.ratio = SCORES[0] / maximum
+        if GAME_STATE == GAME_RUNNING and self.ratio > 0:
+            self.meter_backdrop.color = interpolate_color(self.p1_color, self.p2_color, self.ratio)
+            self.meter_backdrop.pos = [(x / 2 - self.meter_width / 2) + (x / 2) - self.meter_width * self.ratio - self.meter_backdrop.size[0] / 2, y - self.meter_height * 1.2]
+            self.meter_indicator.pos = [(x / 2 - self.meter_width / 2) + (x / 2) - self.meter_width * self.ratio - self.meter_indicator.size[0] / 2, y - self.meter_height * 1.2]
+
+    def resize(self):
+        x, y = Window.size
+        self.old_window_size_x = x
+        self.old_window_size_y = y
+        self.sides.children[2].size = [self.bar_width,y]
+        self.sides.children[5].pos = [x-self.bar_width,0]
+        self.sides.children[5].size = [self.bar_width,y]
+        self.meter_width = x / 2
+        self.meter_backdrop.pos = [x / 2 - self.meter_backdrop.size[0] / 2,y - self.meter_height * 1.2]
+        self.meter_indicator.pos = [x / 2 - self.meter_indicator.size[0] / 2,y - self.meter_height * 1.2]
+        self.meter_backdrop.color = interpolate_color(self.p1_color, self.p2_color, 0.5)
+        self.meter_bar.children[2].pos = [x / 2 - self.meter_width / 2,y - self.meter_height * 0.9]
+        self.meter_bar.children[2].size = [self.meter_width,self.meter_height / 3]
+        for x in range(WIDTH):
+            for y in range(HEIGHT):
+                val = self.cells[x][y]
+                if val != 0:
+                    val.children[2].pos = (x * self.spacing_x, y * self.spacing_y)
+                    val.children[2].size = (self.spacing_x, self.spacing_y)
+
+    def update(self, dt):
+        global BLACK, WHITE, RED, GREEN, BLUE, GRAY
         with self.canvas:
             x, y = Window.size
             self.spacing_x = x / WIDTH
             self.spacing_y = y / HEIGHT
-            R, G, B = 0, 0, 0
-            if GAME_STATE == GAME_RUNNING and self.ratio > 0:
-                self.meter_backdrop.color = interpolate_color(self.p1_color, self.p2_color, self.ratio)
-                self.meter_backdrop.pos = [(x / 2 - self.meter_width / 2) + (x / 2) - self.meter_width * self.ratio - self.meter_backdrop.size[0] / 2, y - self.meter_height * 1.2]
-                self.meter_indicator.pos = [(x / 2 - self.meter_width / 2) + (x / 2) - self.meter_width * self.ratio - self.meter_indicator.size[0] / 2, y - self.meter_height * 1.2]
             if self.old_window_size_x != x or self.old_window_size_y != y:
-                self.old_window_size_x = x
-                self.old_window_size_y = y
-                self.sides.children[2].size = [self.bar_width,y]
-                self.sides.children[5].pos = [x-self.bar_width,0]
-                self.sides.children[5].size = [self.bar_width,y]
-                self.meter_width = x / 2
-                self.meter_backdrop.pos = [x / 2 - self.meter_backdrop.size[0] / 2,y - self.meter_height * 1.2]
-                self.meter_indicator.pos = [x / 2 - self.meter_indicator.size[0] / 2,y - self.meter_height * 1.2]
-                self.meter_backdrop.color = interpolate_color(self.p1_color, self.p2_color, 0.5)
-                self.meter_bar.children[2].pos = [x / 2 - self.meter_width / 2,y - self.meter_height * 0.9]
-                self.meter_bar.children[2].size = [self.meter_width,self.meter_height / 3]
-                for x in range(WIDTH):
-                    for y in range(HEIGHT):
-                        val = self.cells[x][y]
-                        if val != 0:
-                            val.children[2].pos = (x * self.spacing_x, y * self.spacing_y)
-                            val.children[2].size = (self.spacing_x, self.spacing_y)
+                self.resize()
             x = 0
             y = -1
             count = 0
@@ -323,16 +329,6 @@ class MenuWidget(Widget):
         FW_CC_QUEUE.put("[CMD] done")
         App.get_running_app().stop()
 
-def get(x, y):
-    if x >= WIDTH or y >= HEIGHT:
-        s = "Index %d or %d is out of bounds." % (x, y)
-        raise IndexError(s)
-    position = (y * HEIGHT * INTS_PER_FIELD) + (x * INTS_PER_FIELD)
-    values = []
-    for i in range(INTS_PER_FIELD):
-        values.append(WORLD_DATA[position + i])
-    return values
-
 def poll(dt):
     global NUMBER, CURRENT_SCREEN, TIME, SCORES
     while FW_OUTPUT.poll():
@@ -355,6 +351,7 @@ def poll(dt):
                 SCREEN_LIST[4].children[0].tick_slider.value = IPS
         elif isinstance(input, list):
             SCORES = input
+            SCREEN_LIST[2].children[0].update_ratio()
 
 def index_of_screen(name):
     for i, screen in enumerate(SCREEN_LIST):
