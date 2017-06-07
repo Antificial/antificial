@@ -16,7 +16,8 @@ GAME_STATE = GAME_BEGIN
 STARTSIGNALSEND = False
 
 XMIN = 25.5
-XMAX = 934.5
+XMAX = 928
+XMIDDLE = (XMAX-XMIN)/2
 YMIN = 28.5
 YMAX = 514.5
 SHOW_DEBUG_WINDOWS = True
@@ -26,8 +27,8 @@ class Settings(object):
     DP = 2
     MinDistance = 22
     CannyValue = 66
-    Threshold = 14
-    MinRadius = 13
+    Threshold = 27
+    MinRadius = 10
     MaxRadius = 17
 
     def get(self):
@@ -91,7 +92,8 @@ def getPointClosestTo(point, pointList):
 
 def configureBoundaries(grayscale, original, m, prevContour):
     thresGray = cv2.GaussianBlur(grayscale, (7,7), 0)
-    _, thresGray = cv2.threshold(thresGray, 15, 255, cv2.THRESH_BINARY)
+    _, thresGray = cv2.threshold(thresGray, 20, 255, cv2.THRESH_BINARY)
+    cv2.imshow("thres", thresGray)
     thresGray = cv2.dilate(thresGray,(5,5), iterations = 3)
     thresGray = cv2.blur(thresGray,(7,7))
     _, contours, _ = cv2.findContours(thresGray.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -155,32 +157,36 @@ def processData(ballCenters):
     return ballPositions
 
 def convertToGameWorldCoordinates(ballPositions, player):
-   global GRID_RESOLUTION, XMAX, XMIN, YMIN, YMAX
-   grid_width = GRID_RESOLUTION[0]
-   grid_heigth = GRID_RESOLUTION[1]
+    global GRID_RESOLUTION, XMAX, XMIN, YMIN, YMAX, XMIDDLE
+    grid_width = GRID_RESOLUTION[0]
+    grid_heigth = GRID_RESOLUTION[1]
 
-   gameCoordinates = []
-   for (x,y) in ballPositions:
-       newX = int((x-XMIN)*(grid_width-1)/(XMAX-XMIN))
-       newY = int((y-YMIN)*(grid_heigth-1)/(YMAX-YMIN))
+    gameCoordinates = []
+    for (x,y) in ballPositions:
+        x -=  (x-XMIDDLE)/45
+        newX = int((x-XMIN)*(grid_width-1)/(XMAX-XMIN))
+        newY = int((y-YMIN)*(grid_heigth-1)/(YMAX-YMIN))
 
-       if newX == 0:
+        if newX == 0:
            newX = 1
 
-       if newX == (grid_width - 1):
+        if newX == (grid_width - 1):
            newX = grid_width - 2
 
-       if newY == 0:
+        if newY == 0:
            newY = 1
 
-       if newY == (grid_heigth - 1):
+        if newY == (grid_heigth - 1):
            newY = grid_heigth - 2
 
-       for currentX in range(newX - 1, newX + 2):
-           for currentY in range(newY - 1, newY + 2):
-               gameCoordinates.append((currentX, currentY, player))
+        for currentX in range(newX - 1, newX + 2):
+            for currentY in range(newY - 1, newY + 2):
+                if currentY < grid_heigth/2:
+                    gameCoordinates.append((currentX, currentY+2, player))
+                else:
+                    gameCoordinates.append((currentX, currentY, player))
 
-   return gameCoordinates
+    return gameCoordinates
 
 def init():
     global SETTINGS, SHOW_DEBUG_WINDOWS
@@ -191,8 +197,8 @@ def init():
         cv2.createTrackbar("DP", "settings", 2, 5, SETTINGS.updateDP)
         cv2.createTrackbar("mindist", "settings", 22, 100, SETTINGS.updateMinDistance)
         cv2.createTrackbar("cannyValue", "settings", 66, 250, SETTINGS.updateCannyValue)
-        cv2.createTrackbar("threshold", "settings", 14, 75, SETTINGS.updateThreshold)
-        cv2.createTrackbar("minR", "settings", 13, 100, SETTINGS.updateMinRadius)
+        cv2.createTrackbar("threshold", "settings", 27, 75, SETTINGS.updateThreshold)
+        cv2.createTrackbar("minR", "settings", 10, 100, SETTINGS.updateMinRadius)
         cv2.createTrackbar("maxR", "settings", 17, 100, SETTINGS.updateMaxRadius)
 
 def getVideoFeed(src=0):
@@ -217,17 +223,17 @@ def work():
     isResizing = True
     m = False
     prevContour = None
-    FPS = 20.
+    FPS = 15.
     FPSCounter = 0
     stableBoundariesC = 0
     redBallCenters = []
     greenBallCenters = []
     stream = getVideoFeed()
     numDefects = {6}
-    minimunRedHSV = np.array([0,200,78])
+    minimunRedHSV = np.array([144,0,41])
     maximumRedHSV = np.array([255,255,255])
-    minimunGreenHSV = np.array([30,61,39])
-    maximumGreenHSV = np.array([95,182,191])
+    minimunGreenHSV = np.array([0,121,29])
+    maximumGreenHSV = np.array([100,255,150])
     
     minimunRedBGR = np.array([0,0,96])
     maximumRedBGR = np.array([64,78,255])
@@ -269,7 +275,8 @@ def work():
         if GAME_STATE == GAME_BEGIN:
             if isResizing:
                 gameBoardROI, m, prevContour = configureBoundaries(grayscaleOriginal, original, m, prevContour)
-
+                cv2.imshow("game", grayscaleOriginal)
+                cv2.waitKey(1)
                 if gameBoardROI is None:
                     print("Failed to establish boundary! Retrying in 5 seconds...")
                     time.sleep(5.0)
@@ -281,83 +288,83 @@ def work():
                 continue
 
             gameBoardROI = cv2.warpPerspective(original,m,(960,540))
-            startROI1 = gameBoardROI[20:160, 360:600]
-            startROI2 = gameBoardROI[380:520, 360:600]
-            s1g = cv2.cvtColor(startROI1, cv2.COLOR_BGR2GRAY)
-            s2g = cv2.cvtColor(startROI2, cv2.COLOR_BGR2GRAY)
+            # startROI1 = gameBoardROI[20:160, 360:600]
+            # startROI2 = gameBoardROI[380:520, 360:600]
+            # s1g = cv2.cvtColor(startROI1, cv2.COLOR_BGR2GRAY)
+            # s2g = cv2.cvtColor(startROI2, cv2.COLOR_BGR2GRAY)
 
 
-            s1g = cv2.GaussianBlur(s1g, (9,9), 9)
-            s2g = cv2.GaussianBlur(s2g, (9,9), 9)
+            # s1g = cv2.GaussianBlur(s1g, (9,9), 9)
+            # s2g = cv2.GaussianBlur(s2g, (9,9), 9)
 
-            #thres1 = cv2.adaptiveThreshold(s1g, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 17, 2)
-            #thres2 = cv2.adaptiveThreshold(s2g, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 17, 2)
+            # #thres1 = cv2.adaptiveThreshold(s1g, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 17, 2)
+            # #thres2 = cv2.adaptiveThreshold(s2g, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 17, 2)
 
-            _, thres1 = cv2.threshold(s1g, 70, 255, cv2.THRESH_BINARY_INV)
-            _, thres2 = cv2.threshold(s2g, 70, 255, cv2.THRESH_BINARY_INV)
+            # _, thres1 = cv2.threshold(s1g, 70, 255, cv2.THRESH_BINARY_INV)
+            # _, thres2 = cv2.threshold(s2g, 70, 255, cv2.THRESH_BINARY_INV)
 
-            #thres1 = cv2.GaussianBlur(thres1, (11,11), 0)
-            #thres2 = cv2.GaussianBlur(thres2, (11,11), 0)
+            # #thres1 = cv2.GaussianBlur(thres1, (11,11), 0)
+            # #thres2 = cv2.GaussianBlur(thres2, (11,11), 0)
 
-            _, s1Contours,_ = cv2.findContours(thres1.copy(),cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-            _, s2Contours,_ = cv2.findContours(thres2.copy(),cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+            # _, s1Contours,_ = cv2.findContours(thres1.copy(),cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+            # _, s2Contours,_ = cv2.findContours(thres2.copy(),cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
 
-            s1Contours = sorted(s1Contours, key = cv2.contourArea, reverse = True)[:1]
-            s2Contours = sorted(s2Contours, key = cv2.contourArea, reverse = True)[:1]
+            # s1Contours = sorted(s1Contours, key = cv2.contourArea, reverse = True)[:1]
+            # s2Contours = sorted(s2Contours, key = cv2.contourArea, reverse = True)[:1]
 
-            cv2.drawContours(startROI1, s1Contours, -1, (0,0,255))
-            cv2.drawContours(startROI2, s2Contours, -1, (0,0,255))
+            # cv2.drawContours(startROI1, s1Contours, -1, (0,0,255))
+            # cv2.drawContours(startROI2, s2Contours, -1, (0,0,255))
 
 
             
 
-            if not STARTSIGNALSEND:
-                if len(s1Contours) > 0:
-                    hull = cv2.convexHull(s1Contours[0], returnPoints = False)
-                    hulld = cv2.convexHull(s1Contours[0], returnPoints = True)
+            # if not STARTSIGNALSEND:
+                # if len(s1Contours) > 0:
+                    # hull = cv2.convexHull(s1Contours[0], returnPoints = False)
+                    # hulld = cv2.convexHull(s1Contours[0], returnPoints = True)
 
-                    if len(hull) > 0:
-                        cv2.drawContours(startROI1, [hulld], 0, (0,255,0))
-                        defects = cv2.convexityDefects(s1Contours[0],hull)
-                        if defects is not None:
-                            for i in range(defects.shape[0]):
-                               s,e,f,d = defects[i,0]
-                               start = tuple(s1Contours[0][s][0])
-                               end = tuple(s1Contours[0][e][0])
-                               far = tuple(s1Contours[0][f][0])
-                               cv2.line(startROI1,start,end,[0,255,0],2)
-                               cv2.circle(startROI1,far,5,[0,0,255],-1)
-                            if len(defects) in numDefects:
-                                print("Virtual spacebar" + str(len(defects)))
-                                IR_INPUT.send("[KEY] 32") # Virtual spacebar
-                                STARTSIGNALSEND = True
+                    # if len(hull) > 0:
+                        # cv2.drawContours(startROI1, [hulld], 0, (0,255,0))
+                        # defects = cv2.convexityDefects(s1Contours[0],hull)
+                        # if defects is not None:
+                            # for i in range(defects.shape[0]):
+                               # s,e,f,d = defects[i,0]
+                               # start = tuple(s1Contours[0][s][0])
+                               # end = tuple(s1Contours[0][e][0])
+                               # far = tuple(s1Contours[0][f][0])
+                               # cv2.line(startROI1,start,end,[0,255,0],2)
+                               # cv2.circle(startROI1,far,5,[0,0,255],-1)
+                            # if len(defects) in numDefects:
+                                # print("Virtual spacebar" + str(len(defects)))
+                                # IR_INPUT.send("[KEY] 32") # Virtual spacebar
+                                # STARTSIGNALSEND = True
 
-                if len(s2Contours) > 0:
-                    hull = cv2.convexHull(s2Contours[0], returnPoints = False)
-                    hulld = cv2.convexHull(s2Contours[0], returnPoints = True)
-                    if len(hull) > 0:
-                        cv2.drawContours(startROI2, [hulld], 0, (0,255,0))
-                        defects = cv2.convexityDefects(s2Contours[0],hull)
-                        if defects is not None:
-                            for i in range(defects.shape[0]):
-                               s,e,f,d = defects[i,0]
-                               start = tuple(s2Contours[0][s][0])
-                               end = tuple(s2Contours[0][e][0])
-                               far = tuple(s2Contours[0][f][0])
-                               cv2.line(startROI2,start,end,[0,255,0],2)
-                               cv2.circle(startROI2,far,5,[0,0,255],-1)
-                            if len(defects) in numDefects:
-                                print("Virtual spacebar" + str(len(defects)))
-                                IR_INPUT.send("[KEY] 32") # Virtual spacebar
-                                STARTSIGNALSEND = True
+                # if len(s2Contours) > 0:
+                    # hull = cv2.convexHull(s2Contours[0], returnPoints = False)
+                    # hulld = cv2.convexHull(s2Contours[0], returnPoints = True)
+                    # if len(hull) > 0:
+                        # cv2.drawContours(startROI2, [hulld], 0, (0,255,0))
+                        # defects = cv2.convexityDefects(s2Contours[0],hull)
+                        # if defects is not None:
+                            # for i in range(defects.shape[0]):
+                               # s,e,f,d = defects[i,0]
+                               # start = tuple(s2Contours[0][s][0])
+                               # end = tuple(s2Contours[0][e][0])
+                               # far = tuple(s2Contours[0][f][0])
+                               # cv2.line(startROI2,start,end,[0,255,0],2)
+                               # cv2.circle(startROI2,far,5,[0,0,255],-1)
+                            # if len(defects) in numDefects:
+                                # print("Virtual spacebar" + str(len(defects)))
+                                # IR_INPUT.send("[KEY] 32") # Virtual spacebar
+                                # STARTSIGNALSEND = True
 
 
-            if SHOW_DEBUG_WINDOWS:
-                cv2.imshow("startROI1", s1g)
-                cv2.imshow("startROI2", s2g)
-                cv2.imshow("thres1", thres1)
-                cv2.imshow("thres2", thres2)
-                cv2.imshow("gameBoardROI", gameBoardROI)
+            # if SHOW_DEBUG_WINDOWS:
+                # cv2.imshow("startROI1", s1g)
+                # cv2.imshow("startROI2", s2g)
+                # cv2.imshow("thres1", thres1)
+                # cv2.imshow("thres2", thres2)
+                # cv2.imshow("gameBoardROI", gameBoardROI)
 
             time.sleep(0.2) # let's not waste too much cpu time, relax for a bit
             begin = time.time()

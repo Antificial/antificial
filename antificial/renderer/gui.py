@@ -7,7 +7,7 @@ from random import randint
 # TODO: replace this with push through queue?
 from framework import handler
 
-PROJECTOR_MODE = False
+PROJECTOR_MODE = True
 
 from kivy.config import Config
 Config.set("kivy", "log_level", "warning") # one of: trace, debug, info, warning, error, critical
@@ -231,16 +231,17 @@ class SimulationWidget(Widget):
                         self.cells[x][y_inverted].children[0].rgba = [0, 1, 0, food_pheromone_level / 255 * ALPHA_DAMPEN]
                 if ant_count > 0:
                     self.cells[x][y_inverted].children[0].rgb = [1, 1, 1]
-                for player_index in range(PLAYER_COUNT):
-                    food_level = WORLD_DATA[i + 4 + player_index]
-                    if food_level > 0:
-                        has_food = True
-                        if player_index == 0:
-                            self.cells[x][y_inverted].children[0].rgba = [1, 0, 0, food_level / 255]
-                        elif player_index == 1:
-                            self.cells[x][y_inverted].children[0].rgba = [0, 1, 0, food_level / 255]
-                        else:
-                            self.cells[x][y_inverted].children[0].rgba = [0, 0, 1, food_level / 255]
+                
+                #for player_index in range(PLAYER_COUNT):
+                #    food_level = WORLD_DATA[i + 4 + player_index]
+                #    if food_level > 0:
+                #        has_food = True
+                #        if player_index == 0:
+                #            self.cells[x][y_inverted].children[0].rgba = [1, 0, 0, food_level / 255]
+                #        elif player_index == 1:
+                #            self.cells[x][y_inverted].children[0].rgba = [0, 1, 0, food_level / 510]
+                #        else:
+                #            self.cells[x][y_inverted].children[0].rgba = [0, 0, 1, food_level / 255]
             nest_x = nest_coordinates[0]
             nest_y = nest_coordinates[1]
             if nest_coordinates != (0,0):

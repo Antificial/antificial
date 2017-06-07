@@ -18,7 +18,7 @@ GAME_RUNNING = 1
 GAME_END = 2
 GAME_STOP = 3
 GAME_STATE = GAME_BEGIN
-GAME_DURATION = 180 # in seconds
+GAME_DURATION = 120 # in seconds
 # Game Data
 COLONY = None
 GAMERULES = None
@@ -147,8 +147,9 @@ def app_loop():
             FW_INPUT.send("[GAME_STATE] %d" % GAME_STATE)
             IR_CC_QUEUE.put("[GAME_STATE] %d" % GAME_STATE)
             time.sleep(5)
+            handle_pipe()
             WORLD.reset()
-            time.sleep(5)
+            time.sleep(1)
             GAME_STATE = GAME_BEGIN
 
 # Run this from other code
