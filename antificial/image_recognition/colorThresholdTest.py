@@ -35,17 +35,17 @@ def main():
     stream.set(3, 1280)
     stream.set(4, 720)
     
-    maxC = np.array([360,100,100])
+    maxC = np.array([179,255,255])
     minC = np.array([0,0,0])
     SETTINGS = Settings()
     
     cv2.namedWindow("settings")
-    cv2.createTrackbar("hmin", "settings", 0, 255, SETTINGS.updateRmin)
+    cv2.createTrackbar("hmin", "settings", 0, 179, SETTINGS.updateRmin)
     cv2.createTrackbar("smin", "settings", 0, 255, SETTINGS.updateGmin)
     cv2.createTrackbar("vmin", "settings", 0, 255, SETTINGS.updateBmin)
-    cv2.createTrackbar("hmax", "settings", 360, 360, SETTINGS.updateRmax)
-    cv2.createTrackbar("smax", "settings", 100, 100, SETTINGS.updateGmax)
-    cv2.createTrackbar("vmax", "settings", 100, 100, SETTINGS.updateBmax)
+    cv2.createTrackbar("hmax", "settings", 179, 179, SETTINGS.updateRmax)
+    cv2.createTrackbar("smax", "settings", 255, 256, SETTINGS.updateGmax)
+    cv2.createTrackbar("vmax", "settings", 255, 256, SETTINGS.updateBmax)
     
     
     while 1:
