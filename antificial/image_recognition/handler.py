@@ -20,8 +20,8 @@ XMAX = 928
 XMIDDLE = (XMAX-XMIN)/2
 YMIN = 28.5
 YMAX = 514.5
-SHOW_DEBUG_WINDOWS = True
-DEBUG_BALLS_ONLY = False
+SHOW_DEBUG_WINDOWS = False
+DEBUG_BALLS_ONLY = True
 
 class Settings(object):
     DP = 2
