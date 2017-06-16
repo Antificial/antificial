@@ -20,7 +20,14 @@ $ cd antificial/
 $ python main.py
 ```
 
-Should you encounter an error like this: `Cython is missing, it's required for compiling kivy !` after installing the requirements through `pip`, please `pip install Cython` and then try again.
+### Known Errors
+##### `Cython is missing, it's required for compiling kivy!`:  
+This likely occurs after trying to install the requirements through `pip`. Please `pip install Cython` and then try again.
+
+##### `No module named 'cv2'`:  
+Likely occurs after trying to start the program for the first time. Sometimes when creating a virtual environment, python does not copy the link to OpenCV, so it has to be done manually afterwards. The original link can be found in the `site-packages` of the respective original python installation, e.g. `/usr/local/lib/python3.6/site-packages/cv2.so`.  
+To re-establish the link in the virtual environment, simply copy the link into it like this, then run the program again:  
+`cp /usr/local/lib/python3.6/site-packages/cv2.so venv/lib/python3.6/site-packages/cv2.so`.
 
 ## Contributors
 
