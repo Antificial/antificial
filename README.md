@@ -20,6 +20,8 @@ $ cd antificial/
 $ python main.py
 ```
 
+Should you encounter an error like this: `Cython is missing, it's required for compiling kivy !` after installing the requirements through `pip`, please `pip install Cython` and then try again.
+
 ## Contributors
 
 ### Contributors on GitHub
