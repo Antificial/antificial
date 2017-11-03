@@ -1,11 +1,11 @@
+Cython==0.26.1
 appdirs==1.4.3
-Cython==0.25.2
 docutils==0.13.1
-Kivy==1.10.0
-Kivy-Garden==0.1.4
-numpy==1.12.1
 packaging==16.8
 Pygments==2.2.0
 pyparsing==2.2.0
 requests==2.14.2
 six==1.10.0
+Kivy==1.10.0
+Kivy-Garden==0.1.4
+numpy==1.13.3

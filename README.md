@@ -29,6 +29,14 @@ Likely occurs after trying to start the program for the first time. Sometimes wh
 To re-establish the link in the virtual environment, simply copy the link into it like this, then run the program again:  
 `cp /usr/local/lib/python3.6/site-packages/cv2.so venv/lib/python3.6/site-packages/cv2.so`.
 
+#### `command 'clang' failed with exit status 1` while installing Kivy:  
+This is due to recent changes in Cython and Kivy. Installing the `master` version (`1.10.1.dev0`) fixes the error:  
+`pip install https://github.com/kivy/kivy/archive/master.zip`
+
+#### `ImportError: numpy.core.multiarray failed to import`:  
+Numpy wasn't installed correctly. This can be fixed by manually installing `numpy`:  
+`pip install numpy`
+
 ## Contributors
 
 ### Contributors on GitHub
