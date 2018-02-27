@@ -20,7 +20,7 @@ XMAX = 928
 XMIDDLE = (XMAX-XMIN)/2
 YMIN = 28.5
 YMAX = 514.5
-SHOW_DEBUG_WINDOWS = False
+SHOW_DEBUG_WINDOWS = True
 DEBUG_BALLS_ONLY = True
 
 class Settings(object):
@@ -234,7 +234,7 @@ def work():
     maximumRedHSV = np.array([255,255,255])
     minimunGreenHSV = np.array([0,121,29])
     maximumGreenHSV = np.array([100,255,150])
-    
+
     minimunRedBGR = np.array([0,0,96])
     maximumRedBGR = np.array([64,78,255])
     minimunGreenBGR = np.array([59,75,0])
@@ -255,9 +255,11 @@ def work():
             # debug_ball_coordinates = add_debug_ball(debug_ball_coordinates, 90, 10, 0)
             debug_ball_coordinates = add_debug_ball(debug_ball_coordinates, 70, 60, 1)
             IR_INPUT.send(debug_ball_coordinates)
-            cv2.destroyAllWindows()
-            stream.release()
-            return
+            # cv2.destroyAllWindows()
+            # stream.release()
+            # return
+            time.sleep(1)
+            continue
 
         if not stream.isOpened():
             print("No camera detected! Retrying in 5 seconds...")
@@ -316,7 +318,7 @@ def work():
             # cv2.drawContours(startROI2, s2Contours, -1, (0,0,255))
 
 
-            
+
 
             # if not STARTSIGNALSEND:
                 # if len(s1Contours) > 0:
@@ -370,7 +372,7 @@ def work():
             begin = time.time()
 
         if GAME_STATE == GAME_RUNNING:
-            
+
             if gameBoardROI is None:
                 print("Game started without correct ROI! Skipping ball detection.")
                 time.sleep(5)
@@ -380,7 +382,7 @@ def work():
                 gameBoardROI = cv2.warpPerspective(original,m,(960,540))
 
             gameBoardROI = cv2.cvtColor(gameBoardROI, cv2.COLOR_BGR2HSV)
-            
+
             redMask = cv2.inRange(gameBoardROI, minimunRedHSV, maximumRedHSV)
             redFilter = cv2.bitwise_and(gameBoardROI, gameBoardROI, mask = redMask)
 
