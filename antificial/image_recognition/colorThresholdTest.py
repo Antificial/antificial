@@ -34,11 +34,11 @@ def main():
     stream = cv2.VideoCapture(0)
     stream.set(3, 1280)
     stream.set(4, 720)
-    
+
     maxC = np.array([179,255,255])
     minC = np.array([0,0,0])
     SETTINGS = Settings()
-    
+
     cv2.namedWindow("settings")
     cv2.createTrackbar("hmin", "settings", 0, 179, SETTINGS.updateRmin)
     cv2.createTrackbar("smin", "settings", 0, 255, SETTINGS.updateGmin)
@@ -46,21 +46,22 @@ def main():
     cv2.createTrackbar("hmax", "settings", 179, 179, SETTINGS.updateRmax)
     cv2.createTrackbar("smax", "settings", 255, 256, SETTINGS.updateGmax)
     cv2.createTrackbar("vmax", "settings", 255, 256, SETTINGS.updateBmax)
-    
-    
+
+
     while 1:
         _, original = stream.read()
-        
+
         rmin, gmin, bmin, rmax, gmax, bmax = SETTINGS.get()
+        print(bmin, rmin, gmin, rmax, gmax, bmax)
         maxC = np.array([rmax, gmax, bmax])
         minC = np.array([rmin, gmin, bmin])
         original = cv2.cvtColor(original, cv2.COLOR_BGR2HSV)
         mask = cv2.inRange(original, minC, maxC)
         colorRange = cv2.bitwise_and(original, original, mask = mask)
-        
+
         cv2.imshow("g", original)
         cv2.imshow("colorRange", colorRange)
-        
+
         key = cv2.waitKey(1) & 0xFF
         if key == ord("q"):
             cv2.destroyAllWindows()
