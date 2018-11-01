@@ -4,7 +4,7 @@ docutils==0.13.1
 packaging==16.8
 Pygments==2.2.0
 pyparsing==2.2.0
-requests==2.14.2
+requests>=2.20.0
 six==1.10.0
 Kivy==1.10.0
 Kivy-Garden==0.1.4
